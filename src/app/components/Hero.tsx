@@ -37,10 +37,12 @@ export function Hero() {
           minHeight: "100dvh",
           height: "100dvh",
           maxHeight: "100dvh",
+          isolation: "isolate",
+          contain: "layout paint",
         }}
       >
         <div
-          className="pointer-events-none absolute inset-0 z-[1] min-h-full w-full"
+          className="pointer-events-none absolute inset-0 z-[1] min-h-full w-full transform-gpu"
           aria-hidden
         >
           <LiquidEther
@@ -53,20 +55,24 @@ export function Hero() {
               inset: 0,
             }}
             colors={["#5227ff", "#6d9dca", "#8ebbd2"]}
-            mouseForce={80}
-            cursorSize={100}
+            mouseForce={72}
+            cursorSize={96}
             isViscous
-            viscous={83}
-            iterationsViscous={32}
-            iterationsPoisson={56}
-            resolution={0.5}
+            viscous={78}
+            iterationsViscous={12}
+            iterationsPoisson={22}
+            resolution={0.42}
             isBounce={false}
+            BFECC={false}
+            dt={0.016}
+            maxPixelRatio={1.25}
+            antialias={false}
             autoDemo
-            autoSpeed={0.5}
-            autoIntensity={2.2}
-            takeoverDuration={0.25}
+            autoSpeed={0.48}
+            autoIntensity={2.1}
+            takeoverDuration={0.28}
             autoResumeDelay={3000}
-            autoRampDuration={0.6}
+            autoRampDuration={0.65}
           />
         </div>
 

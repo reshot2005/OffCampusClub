@@ -22,6 +22,10 @@ export default function LiquidEther({
   takeoverDuration = 0.25,
   autoResumeDelay = 1000,
   autoRampDuration = 0.6,
+  /** Cap devicePixelRatio for the WebGL canvas (lower = faster, slightly softer). */
+  maxPixelRatio = 2,
+  /** Multisampling is expensive for fullscreen fluid; prefer false for 60fps. */
+  antialias = true,
 }: {
   mouseForce?: number;
   cursorSize?: number;
@@ -42,6 +46,8 @@ export default function LiquidEther({
   takeoverDuration?: number;
   autoResumeDelay?: number;
   autoRampDuration?: number;
+  maxPixelRatio?: number;
+  antialias?: boolean;
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const webglRef = useRef<{
@@ -114,11 +120,21 @@ export default function LiquidEther({
       container: HTMLElement | null = null;
       renderer: THREE.WebGLRenderer | null = null;
       clock: THREE.Clock | null = null;
-      init(container: HTMLElement) {
+      init(
+        container: HTMLElement,
+        opts?: { maxPixelRatio?: number; antialias?: boolean },
+      ) {
         this.container = container;
-        this.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const cap = Math.max(1, Math.min(2, opts?.maxPixelRatio ?? 2));
+        this.pixelRatio = Math.min(window.devicePixelRatio || 1, cap);
         this.resize();
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        this.renderer = new THREE.WebGLRenderer({
+          antialias: opts?.antialias ?? true,
+          alpha: true,
+          powerPreference: "high-performance",
+          stencil: false,
+          depth: true,
+        });
         this.renderer.autoClear = false;
         this.renderer.setClearColor(new THREE.Color(0x000000), 0);
         this.renderer.setPixelRatio(this.pixelRatio);
@@ -151,6 +167,9 @@ export default function LiquidEther({
       coords_old = new THREE.Vector2();
       diff = new THREE.Vector2();
       timer: ReturnType<typeof setTimeout> | null = null;
+      /** Latest pointer; applied once per rAF in flushPointer() to avoid main-thread overload. */
+      pendingClientX: number | null = null;
+      pendingClientY: number | null = null;
       container: HTMLElement | null = null;
       docTarget: Document | null = null;
       listenerTarget: Window | null = null;
@@ -177,7 +196,9 @@ export default function LiquidEther({
           (typeof window !== "undefined" ? window : null);
         if (!defaultView) return;
         this.listenerTarget = defaultView;
-        this.listenerTarget.addEventListener("mousemove", this._onMouseMove);
+        this.listenerTarget.addEventListener("mousemove", this._onMouseMove, {
+          passive: true,
+        });
         this.listenerTarget.addEventListener("touchstart", this._onTouchStart, {
           passive: true,
         });
@@ -229,6 +250,14 @@ export default function LiquidEther({
           this.mouseMoved = false;
         }, 100);
       }
+      /** Sync high-frequency pointer events to the sim at display refresh rate only. */
+      flushPointer() {
+        if (this.pendingClientX === null || this.pendingClientY === null) return;
+        if (this.takeoverActive) return;
+        this.setCoords(this.pendingClientX, this.pendingClientY);
+        this.pendingClientX = null;
+        this.pendingClientY = null;
+      }
       setNormalized(nx: number, ny: number) {
         this.coords.set(nx, ny);
         this.mouseMoved = true;
@@ -248,9 +277,12 @@ export default function LiquidEther({
           this.takeoverActive = true;
           this.hasUserControl = true;
           this.isAutoActive = false;
+          this.pendingClientX = null;
+          this.pendingClientY = null;
           return;
         }
-        this.setCoords(event.clientX, event.clientY);
+        this.pendingClientX = event.clientX;
+        this.pendingClientY = event.clientY;
         this.hasUserControl = true;
       }
       onDocumentTouchStart(event: TouchEvent) {
@@ -258,7 +290,8 @@ export default function LiquidEther({
         const t = event.touches[0];
         if (!this.updateHoverState(t.clientX, t.clientY)) return;
         if (this.onInteract) this.onInteract();
-        this.setCoords(t.clientX, t.clientY);
+        this.pendingClientX = t.clientX;
+        this.pendingClientY = t.clientY;
         this.hasUserControl = true;
       }
       onDocumentTouchMove(event: TouchEvent) {
@@ -266,7 +299,8 @@ export default function LiquidEther({
         const t = event.touches[0];
         if (!this.updateHoverState(t.clientX, t.clientY)) return;
         if (this.onInteract) this.onInteract();
-        this.setCoords(t.clientX, t.clientY);
+        this.pendingClientX = t.clientX;
+        this.pendingClientY = t.clientY;
       }
       onTouchEnd() {
         this.isHoverInside = false;
@@ -914,8 +948,8 @@ export default function LiquidEther({
         this.createShaderPass();
       }
       getFloatType() {
-        const isIOS = /(iPad|iPhone|iPod)/i.test(navigator.userAgent);
-        return isIOS ? THREE.HalfFloatType : THREE.FloatType;
+        // Half float cuts bandwidth vs full float; stable enough for this 2D fluid on Chrome/GPU.
+        return THREE.HalfFloatType;
       }
       createAllFBO() {
         const type = this.getFloatType();
@@ -1078,6 +1112,8 @@ export default function LiquidEther({
         takeoverDuration: number;
         autoResumeDelay: number;
         autoRampDuration: number;
+        maxPixelRatio: number;
+        antialias: boolean;
       };
       lastUserInteraction = performance.now();
       autoDriver: AutoDriver | null = null;
@@ -1088,7 +1124,10 @@ export default function LiquidEther({
       running = false;
       constructor(props: WebGLManager["props"]) {
         this.props = props;
-        Common.init(props.$wrapper);
+        Common.init(props.$wrapper, {
+          maxPixelRatio: props.maxPixelRatio,
+          antialias: props.antialias,
+        });
         Mouse.init(props.$wrapper);
         Mouse.autoIntensity = props.autoIntensity;
         Mouse.takeoverDuration = props.takeoverDuration;
@@ -1127,6 +1166,7 @@ export default function LiquidEther({
         this.output.resize();
       }
       render() {
+        Mouse.flushPointer();
         if (this.autoDriver) this.autoDriver.update();
         Mouse.update();
         Common.update();
@@ -1178,6 +1218,8 @@ export default function LiquidEther({
       takeoverDuration,
       autoResumeDelay,
       autoRampDuration,
+      maxPixelRatio,
+      antialias,
     });
     webglRef.current = webgl;
 
@@ -1274,6 +1316,8 @@ export default function LiquidEther({
     takeoverDuration,
     autoResumeDelay,
     autoRampDuration,
+    maxPixelRatio,
+    antialias,
   ]);
 
   useEffect(() => {
