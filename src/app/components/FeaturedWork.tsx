@@ -2,9 +2,10 @@
 
 import React, { useCallback, useRef } from "react";
 import { motion, useReducedMotion, useSpring } from "motion/react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@/lib/router-compat";
 import { ArrowRight } from "lucide-react";
 import { MovableBlock } from "./LayoutEditor";
+import { navigateForAuth } from "@/lib/client-auth-redirect";
 
 const TILT_MAX_DEG = 11;
 const PARALLAX_PX = 16;
@@ -136,7 +137,10 @@ export function FeaturedWork() {
   const navigate = useNavigate();
 
   return (
-    <section className="relative w-full max-w-[100vw] overflow-x-hidden bg-[#F6F7FA] px-4 py-24 sm:px-6 md:px-12 md:py-32">
+    <section
+      id="occ-clubs"
+      className="relative scroll-mt-24 w-full max-w-[100vw] overflow-x-hidden bg-[#F6F7FA] px-4 py-24 sm:px-6 md:px-12 md:py-32"
+    >
       <div className="mx-auto mb-16 flex w-full max-w-[90rem] flex-col justify-between gap-10 md:mb-20 md:flex-row md:items-end">
         <div className="flex flex-col gap-4 md:gap-6">
           <MovableBlock id="featured-intro-brand">
@@ -274,6 +278,9 @@ export function FeaturedWork() {
         >
           <button
             type="button"
+            onClick={() =>
+              navigateForAuth(navigate, "/dashboard/explore", "/login")
+            }
             className="flex items-center gap-3 rounded-full bg-white px-8 py-4 text-sm font-bold tracking-widest text-slate-900 shadow-xl shadow-slate-200 transition-all hover:scale-105 hover:bg-slate-50"
           >
             <span className="h-2 w-2 rounded-full bg-slate-900" />

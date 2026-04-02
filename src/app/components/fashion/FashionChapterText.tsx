@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router";
+import { Link } from "@/lib/router-compat";
 import type { FashionChapter } from "./fashionConstants";
 import { FAC } from "./fashionConstants";
 

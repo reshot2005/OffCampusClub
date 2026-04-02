@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { stickySectionScrollProgress } from "../lib/frameImage";
 
 /** Same LERP playhead as football — no spring, no bounce. */
 const EASE = 0.06;
@@ -56,9 +57,7 @@ export function usePhotographyPhysics(
     const loop = () => {
       const el = containerRef.current;
       if (el) {
-        const rect = el.getBoundingClientRect();
-        const range = el.scrollHeight - window.innerHeight;
-        const rawProgress = Math.max(0, Math.min(1, -rect.top / range));
+        const rawProgress = stickySectionScrollProgress(el);
         const targetFrame = rawProgress * (totalFrames - 1);
         const deltaTarget = targetFrame - prevTarget.current;
 

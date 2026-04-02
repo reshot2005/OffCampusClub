@@ -60,7 +60,10 @@ export function FootballScrollSection({ frames, loaded = true }: Props) {
       className="relative"
       style={{ height: `${FOOTBALL_SCROLL_HEIGHT_VH}vh`, background: "#060606" }}
     >
-      <div className="sticky top-0 h-[100dvh] w-full overflow-hidden" style={{ background: "#060606" }}>
+      <div
+        className="sticky top-0 relative isolate h-[100dvh] w-full overflow-hidden"
+        style={{ background: "#060606" }}
+      >
 
         {/* Canvas — receives floating currentFrame for sub-frame blending */}
         <FootballCanvas

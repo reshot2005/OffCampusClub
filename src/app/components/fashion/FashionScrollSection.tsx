@@ -64,7 +64,7 @@ export function FashionScrollSection({ frames, loaded = true }: Props) {
       }}
     >
       <div
-        className="sticky top-0 h-[100dvh] w-full overflow-hidden"
+        className="sticky top-0 relative isolate h-[100dvh] w-full overflow-hidden"
         style={{ background: FAC.bg }}
       >
         <FashionCanvas

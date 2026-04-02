@@ -70,7 +70,7 @@ export function PhotographyScrollSection({ frames, loaded = true }: Props) {
       }}
     >
       <div
-        className="sticky top-0 h-[100dvh] w-full overflow-hidden"
+        className="sticky top-0 relative isolate h-[100dvh] w-full overflow-hidden"
         style={{ background: "#0a0a0a" }}
       >
         <PhotographyCanvas

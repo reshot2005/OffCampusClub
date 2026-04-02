@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from '@/lib/router-compat';
 import { motion } from 'motion/react';
 import { Home, ArrowLeft } from 'lucide-react';
 

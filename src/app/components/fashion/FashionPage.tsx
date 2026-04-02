@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Link } from "react-router";
+import { Link } from "@/lib/router-compat";
 import { motion, AnimatePresence } from "motion/react";
 import { useFashionFrames } from "../../../hooks/useFashionFrames";
 import {

@@ -1,9 +1,8 @@
 import React from "react";
 import { motion } from "motion/react";
-import { useNavigate } from "react-router";
 import { MovableBlock } from "./LayoutEditor";
 import LiquidEther from "./LiquidEther";
-import { navigateForAuth } from "@/lib/client-auth-redirect";
+import { scrollToOccClubsSection } from "@/lib/landingNav";
 
 const HERO_VIDEO_SRC =
   "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260217_030345_246c0224-10a4-422c-b324-070b7c0eceda.mp4";
@@ -12,8 +11,6 @@ const HERO_VIDEO_SRC =
 const HERO_CARD_VIDEO_SRC = "/videos/occ-hero-card.mp4";
 
 export function Hero() {
-  const navigate = useNavigate();
-
   return (
     <>
       {/* Fullscreen campus-night video + dim — fixed until covered by sections below */}
@@ -133,7 +130,7 @@ export function Hero() {
           <MovableBlock id="hero-footer-cta" className="shrink-0 px-2">
             <span
               className="cursor-pointer transition-colors hover:text-white"
-              onClick={() => navigateForAuth(navigate, "/clubs", "/register")}
+              onClick={() => scrollToOccClubsSection()}
             >
               Find your club below
             </span>

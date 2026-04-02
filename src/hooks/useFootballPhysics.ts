@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { stickySectionScrollProgress } from "../lib/frameImage";
 
 // ─── One-way damped chase — lerp cannot overshoot, no spring bounce ─────────
 const EASE = 0.06; // smooth ~1s coast toward scroll target
@@ -58,9 +59,7 @@ export function useFootballPhysics(
     const loop = () => {
       const el = containerRef.current;
       if (el) {
-        const rect = el.getBoundingClientRect();
-        const range = el.scrollHeight - window.innerHeight;
-        const rawProgress = Math.max(0, Math.min(1, -rect.top / range));
+        const rawProgress = stickySectionScrollProgress(el);
         const targetFrame = rawProgress * (totalFrames - 1);
 
         // How fast user is moving the scroll anchor this frame (native scroll only)

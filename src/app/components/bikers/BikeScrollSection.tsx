@@ -54,7 +54,10 @@ export function BikeScrollSection({ frames, loaded = true }: Props) {
       className="relative"
       style={{ height: `${SCROLL_HEIGHT_VH}vh`, background: "#080808" }}
     >
-      <div className="sticky top-0 h-[100dvh] w-full overflow-hidden" style={{ background: "#080808" }}>
+      <div
+        className="sticky top-0 relative isolate h-[100dvh] w-full overflow-hidden"
+        style={{ background: "#080808" }}
+      >
         <BikersCanvas
           frames={frames}
           totalFrames={TOTAL_FRAMES}

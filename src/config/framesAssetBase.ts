@@ -12,10 +12,12 @@ export function framesPublicPath(pathFromRoot: string): string {
     process.env.VITE_FRAMES_CDN_BASE ??
     undefined;
 
-  const base = String(processBase ?? viteBase ?? "")
-    .trim()
-    .replace(/\/$/, "");
-  const path = pathFromRoot.startsWith("/") ? pathFromRoot : `/${pathFromRoot}`;
+  const raw = String(processBase ?? viteBase ?? "").trim();
+  // Treat "", "undefined", "null" as unset (bad .env copies)
+  const base =
+    !raw || raw === "undefined" || raw === "null" ? "" : raw.replace(/\/$/, "");
+  let path = pathFromRoot.startsWith("/") ? pathFromRoot : `/${pathFromRoot}`;
+  if (!path.endsWith("/")) path = `${path}/`;
   if (!base) return path;
   return `${base}${path}`;
 }

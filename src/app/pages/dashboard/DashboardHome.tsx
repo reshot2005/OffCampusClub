@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from '@/lib/router-compat';
 import { 
   TrendingUp, 
   Users, 

@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { Link } from "react-router";
+import { Link } from "@/lib/router-compat";
 import type { ChapterConfig } from "./constants";
 
 function getOpacity(scrollProgress: number, from: number, peak: number, to: number) {
