@@ -12,6 +12,7 @@ function LoginPageInner() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/dashboard";
   const reauth = searchParams.get("reauth") === "1";
+  const oauthError = searchParams.get("error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -60,7 +61,8 @@ function LoginPageInner() {
   };
 
   const handleGoogleLogin = () => {
-    alert("Google OAuth would be integrated here");
+    const target = `/api/auth/google/start?redirect=${encodeURIComponent(redirectTo)}`;
+    window.location.assign(target);
   };
 
   return (
@@ -115,6 +117,12 @@ function LoginPageInner() {
         {reauth ? (
           <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
             Your session expired or became invalid. Please log in again.
+          </div>
+        ) : null}
+
+        {oauthError ? (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            {oauthError}
           </div>
         ) : null}
 
@@ -372,7 +380,7 @@ function LoginPageInner() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[#0C0C0A]" aria-hidden />}>
       <LoginPageInner />
     </Suspense>
   );

@@ -1,11 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#E8E4DC"/>
-      <stop offset="1" stop-color="#C9A96E"/>
+    <linearGradient id="occ-surface" x1="18" y1="12" x2="110" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0C0C0A"/>
+      <stop offset="0.35" stop-color="#151022"/>
+      <stop offset="0.7" stop-color="#1E1240"/>
+      <stop offset="1" stop-color="#2A1852"/>
+    </linearGradient>
+    <linearGradient id="occ-rim" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5227FF"/>
+      <stop offset="0.55" stop-color="#6B4FE0"/>
+      <stop offset="1" stop-color="#D4AF37"/>
+    </linearGradient>
+    <linearGradient id="occ-sheen" x1="64" y1="24" x2="64" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5F0E8" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#C9A96E" stop-opacity="0.06"/>
     </linearGradient>
   </defs>
-  <circle cx="64" cy="64" r="64" fill="url(#bg)"/>
-  <circle cx="64" cy="52" r="22" fill="#0C0C0A" fill-opacity="0.12"/>
-  <path d="M32 108c8-18 24-28 32-28s24 10 32 28" stroke="#0C0C0A" stroke-opacity="0.15" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="64" cy="64" r="64" fill="url(#occ-surface)"/>
+  <circle cx="64" cy="64" r="61" fill="none" stroke="url(#occ-rim)" stroke-width="2.5" opacity="0.92"/>
+  <circle cx="64" cy="64" r="54" fill="url(#occ-sheen)" opacity="0.9"/>
+  <circle cx="64" cy="52" r="21" fill="#F5F0E8" fill-opacity="0.14"/>
+  <path
+    d="M34 108c9-19 25-30 30-30s21 11 30 30"
+    stroke="url(#occ-rim)"
+    stroke-opacity="0.35"
+    stroke-width="7"
+    stroke-linecap="round"
+  />
 </svg>

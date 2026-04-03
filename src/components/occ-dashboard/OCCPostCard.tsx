@@ -197,7 +197,7 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
               className="relative z-10 flex h-[200px] sm:h-[280px] w-full items-center justify-center bg-gradient-to-br from-[#5227FF]/20 via-[#121212] to-[#D4AF37]/20"
               onDoubleClick={toggleLike}
             >
-              <span className="text-[11px] sm:text-[13px] font-black uppercase tracking-[0.2em] text-white/20">
+              <span className="text-[11px] sm:text-[13px] font-medium uppercase tracking-[0.2em] text-white/20">
                 {post.clubName || "OCC"}
               </span>
             </div>
@@ -238,7 +238,7 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
               </div>
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[13px] sm:text-[14px] font-bold text-black tracking-tight font-sans">{post.username}</span>
+                  <span className="text-[13px] sm:text-[14px] font-semibold text-black tracking-tight font-sans">{post.username}</span>
                   <BadgeCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#5227FF]" fill="#5227FF" />
                 </div>
                 <span className="text-[9px] sm:text-[10px] font-semibold text-black/30 uppercase tracking-[0.1em] font-sans">{post.timestamp} • {post.clubName || "OCC"}</span>
@@ -268,7 +268,7 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {['Elite', 'Direct', 'Intel'].map(tag => (
-                      <span key={tag} className="px-2.5 py-1 rounded-full border border-black/[0.04] bg-black/[0.01] text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-black/30 font-sans">
+                      <span key={tag} className="px-2.5 py-1 rounded-full border border-black/[0.04] bg-black/[0.01] text-[8px] sm:text-[9px] font-medium uppercase tracking-[0.15em] text-black/30 font-sans">
                         #{tag}
                       </span>
                     ))}
@@ -283,13 +283,13 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
                   className="space-y-5 sm:space-y-6"
                 >
                   <div className="flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md py-2 z-10">
-                    <h5 className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-black/30">Community Intel • {comments.length}</h5>
-                    <button onClick={() => setIsCommentsOpen(false)} className="text-[9px] sm:text-[10px] font-bold text-[#5227FF] uppercase tracking-widest hover:underline p-1">Close x</button>
+                    <h5 className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] text-black/30">Community Intel • {comments.length}</h5>
+                    <button onClick={() => setIsCommentsOpen(false)} className="text-[9px] sm:text-[10px] font-medium text-[#5227FF] uppercase tracking-widest hover:underline p-1">Close x</button>
                   </div>
                   
                   {comments.length === 0 ? (
                     <div className="py-12 sm:py-20 text-center">
-                      <p className="text-[12px] sm:text-[13px] font-bold text-black/10">No perspectives shared yet.</p>
+                      <p className="text-[12px] sm:text-[13px] font-medium text-black/10">No perspectives shared yet.</p>
                     </div>
                   ) : (
                     <div className="space-y-5 sm:space-y-6">
@@ -299,7 +299,7 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
                             <img src={avatarSrc(comment.user.avatar)} alt="" className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover shrink-0 ring-1 ring-black/5" />
                             <div className="flex-1 flex flex-col gap-1 sm:gap-1.5">
                               <div className="flex items-center justify-between">
-                                <span className="text-[11px] sm:text-[12px] font-bold text-black">{comment.user.fullName}</span>
+                                <span className="text-[11px] sm:text-[12px] font-semibold text-black">{comment.user.fullName}</span>
                                 <div className="flex items-center gap-1 opacity-0 group-hover/comment:opacity-100 transition-all">
                                   <button onClick={() => handleDeleteComment(comment.id)} className="p-1 px-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors">
                                     <Trash2 className="h-3 w-3" />
@@ -314,9 +314,9 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
                                 <div className="bg-[#5227FF]/[0.03] p-2.5 sm:p-3 rounded-xl border border-[#5227FF]/10 shadow-sm animate-in fade-in zoom-in-95 duration-500">
                                   <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
                                     <Zap className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-[#5227FF]" fill="currentColor" />
-                                    <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-[#5227FF]">Moderator Intel</span>
+                                    <span className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-[0.2em] text-[#5227FF]">Moderator Intel</span>
                                   </div>
-                                  {comment.user.email && <div className="text-[10px] sm:text-[11px] font-bold text-black/80">{comment.user.email}</div>}
+                                  {comment.user.email && <div className="text-[10px] sm:text-[11px] font-medium text-black/80">{comment.user.email}</div>}
                                   {comment.user.phoneNumber && <div className="text-[10px] sm:text-[11px] font-medium text-black/40 mt-0.5">{comment.user.phoneNumber}</div>}
                                 </div>
                               )}
@@ -324,7 +324,7 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
                               <p className="text-[12.5px] sm:text-[13.5px] font-medium leading-relaxed text-black/60 font-sans">
                                 {comment.content}
                               </p>
-                              <span className="text-[9px] sm:text-[10px] font-bold text-black/20 uppercase tracking-tighter">
+                              <span className="text-[9px] sm:text-[10px] font-medium text-black/20 uppercase tracking-tighter">
                                 {new Date(comment.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                               </span>
                             </div>
@@ -344,20 +344,20 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
               <div className="flex items-center gap-4 sm:gap-6">
                 <button onClick={toggleLike} className="flex items-center gap-1.5 sm:gap-2 group">
                   <Heart className={`h-5 w-5 sm:h-6 sm:w-6 transition-all ${liked ? 'text-[#FF3040] fill-[#FF3040]' : 'text-black/20 group-hover:text-[#FF3040]'}`} strokeWidth={2.4} />
-                  <span className="text-[12px] sm:text-[13px] font-black text-black/80 font-sans">{likeCount}</span>
+                  <span className="text-[12px] sm:text-[13px] font-semibold text-black/80 font-sans">{likeCount}</span>
                 </button>
                 <button 
                   onClick={() => setIsCommentsOpen(!isCommentsOpen)} 
                   className={`flex items-center gap-1.5 sm:gap-2 group transition-all ${isCommentsOpen ? 'scale-110' : 'scale-100'}`}
                 >
                   <MessageCircle className={`h-5 w-5 sm:h-6 sm:w-6 transition-all ${isCommentsOpen ? 'text-[#5227FF] fill-[#5227FF]/10' : 'text-black/20 group-hover:text-[#5227FF]'}`} strokeWidth={2.4} />
-                  <span className="text-[12px] sm:text-[13px] font-black text-black/80 font-sans">{comments.length || post.commentsCount || 0}</span>
+                  <span className="text-[12px] sm:text-[13px] font-semibold text-black/80 font-sans">{comments.length || post.commentsCount || 0}</span>
                 </button>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <button onClick={handleShare} className="p-2 sm:p-2.5 rounded-xl text-black/10 hover:text-black bg-black/[0.02] transition-all flex items-center gap-2 border border-black/[0.03]">
                   <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                  {sharesCount > 0 && <span className="text-[10px] sm:text-[11px] font-black">{sharesCount}</span>}
+                  {sharesCount > 0 && <span className="text-[10px] sm:text-[11px] font-semibold">{sharesCount}</span>}
                 </button>
                 <button onClick={() => setSaved(!saved)} className="p-2 sm:p-2.5 rounded-xl text-black/10 transition-all bg-black/[0.02] border border-black/[0.03]">
                   <Bookmark className={`h-4 w-4 sm:h-5 sm:w-5 ${saved ? 'text-black fill-black' : 'text-black/10'}`} />
@@ -372,12 +372,12 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
                 type="text" 
                 placeholder={isSubmitting ? "Broadcasting..." : "Share perspective..."}
                 disabled={isSubmitting}
-                className="w-full h-12 sm:h-14 rounded-[1.25rem] bg-black/[0.03] border-2 border-transparent px-5 sm:px-6 pr-20 text-[13px] sm:text-[14px] font-bold text-black outline-none placeholder:text-black/20 focus:bg-white focus:border-[#5227FF]/20 transition-all shadow-inner focus:shadow-none"
+                className="w-full h-12 sm:h-14 rounded-[1.25rem] bg-black/[0.03] border-2 border-transparent px-5 sm:px-6 pr-20 text-[13px] sm:text-[14px] font-normal text-black outline-none placeholder:text-black/20 focus:bg-white focus:border-[#5227FF]/20 transition-all shadow-inner focus:shadow-none"
               />
               <button 
                 type="submit"
                 disabled={!commentText.trim() || isSubmitting}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 sm:h-10 px-4 sm:px-6 rounded-xl bg-[#5227FF] text-white text-[10px] sm:text-[11px] font-black uppercase tracking-widest opacity-0 group-focus-within:opacity-100 disabled:opacity-0 transition-all shadow-lg active:scale-95"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 sm:h-10 px-4 sm:px-6 rounded-xl bg-[#5227FF] !text-white text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest opacity-0 group-focus-within:opacity-100 disabled:opacity-0 transition-all shadow-lg active:scale-95"
               >
                 Post
               </button>

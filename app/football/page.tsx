@@ -1,10 +1,5 @@
-import dynamic from "next/dynamic";
-
-const FootballPage = dynamic(
-  () => import("@/app/components/football/FootballPage").then((mod) => mod.FootballPage),
-  { ssr: false },
-);
+import { ClubOnboardingEntry } from "@/components/club-onboarding/ClubOnboardingEntry";
 
 export default function Page() {
-  return <FootballPage />;
+  return <ClubOnboardingEntry clubSlug="sports" />;
 }

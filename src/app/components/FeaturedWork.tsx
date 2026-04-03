@@ -1,11 +1,18 @@
 "use client";
 
 import React, { useCallback, useRef } from "react";
+import Link from "next/link";
 import { motion, useReducedMotion, useSpring } from "motion/react";
 import { useNavigate } from "@/lib/router-compat";
 import { ArrowRight } from "lucide-react";
 import { MovableBlock } from "./LayoutEditor";
-import { navigateForAuth } from "@/lib/client-auth-redirect";
+import {
+  authEntryHref,
+  LANDING_POST_AUTH_PATH,
+  storeRedirectIntent,
+} from "@/lib/client-auth-redirect";
+
+const SEE_ALL_CLUBS_HREF = authEntryHref(LANDING_POST_AUTH_PATH, "/login");
 
 const TILT_MAX_DEG = 11;
 const PARALLAX_PX = 16;
@@ -276,16 +283,15 @@ export function FeaturedWork() {
           transition={{ duration: 0.8 }}
           className="flex justify-center"
         >
-          <button
-            type="button"
-            onClick={() =>
-              navigateForAuth(navigate, "/explore", "/login")
-            }
+          <Link
+            href={SEE_ALL_CLUBS_HREF}
+            prefetch
+            onClick={() => storeRedirectIntent(LANDING_POST_AUTH_PATH)}
             className="flex items-center gap-3 rounded-full bg-white px-8 py-4 text-sm font-bold tracking-widest text-slate-900 shadow-xl shadow-slate-200 transition-all hover:scale-105 hover:bg-slate-50"
           >
             <span className="h-2 w-2 rounded-full bg-slate-900" />
             SEE ALL CLUBS
-          </button>
+          </Link>
         </motion.div>
       </MovableBlock>
     </section>

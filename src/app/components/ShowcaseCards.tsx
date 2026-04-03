@@ -5,7 +5,10 @@ import { MovableBlock } from "./LayoutEditor";
 
 export function ShowcaseCards() {
   return (
-    <section className="min-h-0 w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 py-16 md:min-h-screen md:py-20">
+    <section
+      id="landing-showcase"
+      className="min-h-0 w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 py-16 md:min-h-screen md:py-20"
+    >
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <div className="mb-12 flex flex-col items-center gap-4 text-center md:mb-16 md:gap-5">
           <MovableBlock id="showcase-heading-title">

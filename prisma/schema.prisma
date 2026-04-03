@@ -41,6 +41,7 @@ model User {
   followedBy             Follow[]            @relation("followedBy")
   referralStatsAsHeader  ReferralStat[]      @relation("ReferralHeader")
   referralStatsAsStudent ReferralStat[]      @relation("ReferralStudent")
+  clubOnboardingEntries  ClubOnboarding[]
   referrer               User?               @relation("ReferralRelation", fields: [referredBy], references: [id])
   referrals              User[]              @relation("ReferralRelation")
   commentReports         CommentReport[]
@@ -217,6 +218,24 @@ model ReferralStat {
   student      User     @relation("ReferralStudent", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@map("referral_stats")
+}
+
+model ClubOnboarding {
+  id        String   @id @default(cuid())
+  userId    String
+  clubSlug  String
+  answer1   String
+  answer2   String
+  answer3   String
+  answer4   String
+  answer5   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clubSlug])
+  @@index([clubSlug, createdAt])
+  @@map("club_onboarding")
 }
 
 model Gig {

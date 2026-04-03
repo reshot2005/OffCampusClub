@@ -1,8 +1,17 @@
 "use client";
 
 import React, { useRef, useState } from 'react';
+import Link from 'next/link';
 import { motion, useSpring } from 'motion/react';
 import { MovableBlock } from './LayoutEditor';
+import {
+  authEntryHref,
+  LANDING_POST_AUTH_PATH,
+  storeRedirectIntent,
+} from '@/lib/client-auth-redirect';
+import { scrollToOccClubsSection } from '@/lib/landingNav';
+
+const JOIN_HREF = authEntryHref(LANDING_POST_AUTH_PATH, '/login');
 
 const CARD_W = 560;
 const CARD_H = 380;
@@ -57,16 +66,19 @@ export function ChromeKnotCard() {
 
           <div className="flex items-center gap-3">
             <MovableBlock id="chrome-card-nav-join">
-              <button
-                type="button"
-                className="h-9 rounded-lg bg-[#0D1B2A] px-4 text-sm font-medium text-white transition-colors hover:bg-[#162838]"
+              <Link
+                href={JOIN_HREF}
+                prefetch
+                onClick={() => storeRedirectIntent(LANDING_POST_AUTH_PATH)}
+                className="inline-flex h-9 items-center rounded-lg bg-[#0D1B2A] px-4 text-sm font-medium text-white transition-colors hover:bg-[#162838]"
               >
                 JOIN •
-              </button>
+              </Link>
             </MovableBlock>
             <MovableBlock id="chrome-card-nav-clubs">
               <button
                 type="button"
+                onClick={() => scrollToOccClubsSection()}
                 className="h-9 rounded-lg bg-[#E8E8E8] px-4 text-sm font-medium text-gray-900 transition-colors hover:bg-white"
               >
                 CLUBS ···

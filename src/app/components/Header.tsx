@@ -1,13 +1,77 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { Activity } from "lucide-react";
 import { motion } from "motion/react";
-import { useNavigate } from "@/lib/router-compat";
 import { MovableBlock } from "./LayoutEditor";
-import { navigateForAuth } from "@/lib/client-auth-redirect";
+import {
+  authEntryHref,
+  LANDING_POST_AUTH_PATH,
+  storeRedirectIntent,
+} from "@/lib/client-auth-redirect";
 import { scrollToOccClubsSection } from "@/lib/landingNav";
 
+const JOIN_HREF = authEntryHref(LANDING_POST_AUTH_PATH, "/login");
+
+/** Viewport Y (px) from top — sample row behind header for dark vs light sections */
+const HEADER_PROBE_Y = 36;
+
+function useHeaderOverDarkSection() {
+  const [overDark, setOverDark] = useState(true);
+
+  useEffect(() => {
+    const tick = () => {
+      const hero = document.getElementById("landing-hero");
+      const showcase = document.getElementById("landing-showcase");
+      const inBand = (el: HTMLElement | null) => {
+        if (!el) return false;
+        const r = el.getBoundingClientRect();
+        return HEADER_PROBE_Y >= r.top && HEADER_PROBE_Y <= r.bottom;
+      };
+      setOverDark(inBand(hero) || inBand(showcase));
+    };
+
+    tick();
+    window.addEventListener("scroll", tick, { passive: true });
+    window.addEventListener("resize", tick);
+    return () => {
+      window.removeEventListener("scroll", tick);
+      window.removeEventListener("resize", tick);
+    };
+  }, []);
+
+  return overDark;
+}
+
 export function Header() {
-  const navigate = useNavigate();
+  const overDark = useHeaderOverDarkSection();
+
+  const logoClass = overDark
+    ? "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]"
+    : "!text-slate-900 drop-shadow-none";
+
+  const activityBtnClass = overDark
+    ? "bg-white/15 text-white backdrop-blur-md transition-colors hover:bg-white/25"
+    : "bg-slate-200/50 text-slate-800 backdrop-blur-md transition-colors hover:bg-slate-200";
+
+  const activityIconClass = overDark ? "text-white" : "text-slate-800";
+
+  const joinLinkClass = overDark
+    ? "bg-slate-900/90 px-4 py-2 text-[10px] font-bold tracking-wider !text-white backdrop-blur-md ring-1 ring-white/15 hover:bg-slate-900"
+    : "bg-slate-900 px-4 py-2 text-[10px] font-bold tracking-wider !text-white backdrop-blur-md hover:bg-slate-800";
+
+  const joinClubLinkClass = overDark
+    ? "bg-slate-900/90 px-5 py-2.5 text-xs font-semibold tracking-wider !text-white backdrop-blur-md ring-1 ring-white/15 transition-colors hover:bg-slate-900 hover:ring-white/25"
+    : "bg-slate-900 px-5 py-2.5 text-xs font-semibold tracking-wider !text-white backdrop-blur-md transition-colors hover:bg-slate-800";
+
+  const joinDotClass = overDark ? "bg-white/80" : "bg-white/90";
+
+  const clubsBtnClass = overDark
+    ? "bg-white/15 px-5 py-2.5 text-xs font-semibold tracking-wider !text-white backdrop-blur-md ring-1 ring-white/20 transition-colors hover:bg-white/25"
+    : "bg-slate-200/50 px-5 py-2.5 text-xs font-semibold tracking-wider !text-slate-900 backdrop-blur-md transition-colors hover:bg-slate-200";
+
+  const clubsDotClass = overDark ? "bg-white/75" : "bg-slate-900/70";
 
   return (
     <motion.header
@@ -18,55 +82,46 @@ export function Header() {
     >
       <MovableBlock
         id="header-logo"
-        className="pointer-events-auto select-none text-xl xs:text-2xl font-black tracking-widest text-white drop-shadow-sm font-sans"
+        className={`pointer-events-auto select-none text-xl xs:text-2xl font-black tracking-widest font-sans transition-colors duration-300 ${logoClass}`}
       >
         OCC
       </MovableBlock>
 
       <div className="flex items-center gap-2 sm:gap-3 pointer-events-auto">
         <MovableBlock id="header-activity-btn" className="hidden xs:flex">
-          <button
-            type="button"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200/50 backdrop-blur-md transition-colors hover:bg-slate-200"
-          >
-            <Activity size={16} className="text-slate-800" />
-          </button>
-        </MovableBlock>
-        
-        {/* Mobile-only compact Join button */}
-        <MovableBlock id="header-mobile-join-btn" className="flex sm:hidden">
-          <button
-            type="button"
-            onClick={() => navigateForAuth(navigate, "/explore", "/login")}
-            className="flex items-center justify-center rounded-full bg-slate-800 px-4 py-2 text-[10px] font-bold tracking-wider text-white backdrop-blur-md"
-          >
-            JOIN
+          <button type="button" className={`flex h-9 w-9 items-center justify-center rounded-full ${activityBtnClass}`}>
+            <Activity size={16} className={activityIconClass} />
           </button>
         </MovableBlock>
 
-        {/* Desktop-only full buttons */}
+        <MovableBlock id="header-mobile-join-btn" className="flex sm:hidden">
+          <Link
+            href={JOIN_HREF}
+            prefetch
+            onClick={() => storeRedirectIntent(LANDING_POST_AUTH_PATH)}
+            className={`flex items-center justify-center rounded-full ${joinLinkClass}`}
+          >
+            JOIN
+          </Link>
+        </MovableBlock>
+
         <MovableBlock id="header-join-club-btn" className="hidden sm:flex">
-          <button
-            type="button"
-            onClick={() =>
-              navigateForAuth(navigate, "/explore", "/login")
-            }
-            className="flex items-center justify-center rounded-full bg-slate-800 px-5 py-2.5 text-xs font-semibold tracking-wider text-white backdrop-blur-md transition-colors hover:bg-slate-900"
+          <Link
+            href={JOIN_HREF}
+            prefetch
+            onClick={() => storeRedirectIntent(LANDING_POST_AUTH_PATH)}
+            className={`flex items-center justify-center rounded-full ${joinClubLinkClass}`}
           >
             JOIN A CLUB{" "}
-            <span className="ml-2 inline-block h-1 w-1 rounded-full bg-white/70" />
-          </button>
+            <span className={`ml-2 inline-block h-1 w-1 rounded-full ${joinDotClass}`} />
+          </Link>
         </MovableBlock>
         <MovableBlock id="header-clubs-btn" className="hidden sm:flex">
-          <button
-            type="button"
-            onClick={() => scrollToOccClubsSection()}
-            className="flex items-center justify-center rounded-full bg-slate-200/50 px-5 py-2.5 text-xs font-semibold tracking-wider text-slate-900 backdrop-blur-md transition-colors hover:bg-slate-200"
-          >
+          <button type="button" onClick={() => scrollToOccClubsSection()} className={`flex items-center justify-center rounded-full ${clubsBtnClass}`}>
             CLUBS{" "}
             <span className="ml-2 flex gap-[2px]">
-              <span className="h-1 w-1 rounded-full bg-slate-900/70" />
-              <span className="h-1 w-1 rounded-full bg-slate-900/70" />
+              <span className={`h-1 w-1 rounded-full ${clubsDotClass}`} />
+              <span className={`h-1 w-1 rounded-full ${clubsDotClass}`} />
             </span>
           </button>
         </MovableBlock>

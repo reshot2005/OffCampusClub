@@ -11,16 +11,16 @@ export default async function DashboardLayout({
   const path = (await headers()).get("next-url") ?? "/dashboard";
 
   return (
-    <div className="dashboard-page-zoom flex min-h-screen bg-[#F6F7FA] font-sans tracking-tight text-black overflow-hidden select-none">
+    <div className="dashboard-page-zoom flex min-h-screen bg-[#F6F7FA] font-sans tracking-normal text-black overflow-hidden select-none antialiased [font-family:system-ui,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif]">
       {/* Unified Navigation - Handles Sidebar & Bottom Nav */}
       <OCCSidebar activePath={path} />
       
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative">
+      <div className="relative flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
         <OCCHeader user={user} />
 
-        <main className="flex-1 overflow-y-auto px-0 sm:px-6 lg:px-10 pb-24 lg:pb-10 pt-2 sm:pt-8 bg-[#F6F7FA]">
-          <div className="mx-auto w-full max-w-[1400px]">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-0 sm:px-4 lg:px-5 xl:px-7 pb-24 lg:pb-10 pt-2 sm:pt-6 bg-[#F6F7FA] text-[15px] font-normal leading-normal">
+          <div className="mx-auto w-full max-w-[min(100%,1240px)]">
             {children}
           </div>
         </main>

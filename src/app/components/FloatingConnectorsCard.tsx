@@ -40,32 +40,35 @@ export function FloatingConnectorsCard() {
   };
 
   return (
-    <div className="flex items-center justify-center p-4 sm:p-6 md:p-8 bg-gradient-to-br from-slate-900 to-slate-950">
+    <div className="flex items-center justify-center p-3 sm:p-5 md:p-6 bg-gradient-to-br from-slate-900 to-slate-950">
       <motion.div
         ref={cardRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={() => setCurrent((prev) => (prev + 1) % IMAGES.length)}
-        className="relative w-full max-w-[720px] overflow-hidden rounded-[20px] border border-white/8 cursor-pointer"
+        className="relative w-full max-w-[min(100%,28rem)] sm:max-w-[32rem] overflow-hidden rounded-[20px] border border-white/8 cursor-pointer"
         style={{
           perspective: "1200px",
           rotateX,
           rotateY,
         }}
       >
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={current}
-            src={IMAGES[current]}
-            alt="OCC showcase"
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.6, ease: "easeInOut" }}
-            className="block w-full h-auto object-cover"
-            draggable={false}
-          />
-        </AnimatePresence>
+        {/* Fixed aspect + crop so both carousel images share the same medium frame */}
+        <div className="relative aspect-[4/3] w-full overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={current}
+              src={IMAGES[current]}
+              alt="OCC showcase"
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
+              className="absolute inset-0 h-full w-full object-cover"
+              draggable={false}
+            />
+          </AnimatePresence>
+        </div>
 
         <motion.div
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"

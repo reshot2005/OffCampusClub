@@ -96,10 +96,10 @@ export function OCCTrendingClubs({ clubs }: { clubs: OCCTrendingClub[] }) {
           <div className="p-2 sm:p-2.5 rounded-xl bg-[#5227FF]/10 text-[#5227FF]">
             <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" fill="currentColor" />
           </div>
-          <h2 className="text-[17px] sm:text-[20px] font-bold text-black tracking-tight font-sans">Trending Clubs</h2>
+          <h2 className="text-[17px] sm:text-[20px] font-semibold text-black tracking-tight font-sans">Trending Clubs</h2>
         </div>
 
-        <button className="flex items-center gap-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] text-black/30 hover:text-black transition-all group font-sans">
+        <button className="flex items-center gap-2 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.25em] sm:tracking-[0.35em] text-black/30 hover:text-black transition-all group font-sans">
           View all
           <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" strokeWidth={3} />
         </button>
@@ -138,7 +138,7 @@ export function OCCTrendingClubs({ clubs }: { clubs: OCCTrendingClub[] }) {
             <motion.div 
               key={club.id} 
               whileHover={{ y: -8 }}
-              className="group flex w-[240px] sm:w-[300px] shrink-0 flex-col bg-white rounded-[2rem] sm:rounded-[2.5rem] border border-black/[0.04] overflow-hidden transition-all duration-700 shadow-sm hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.12)] snap-start"
+              className="group flex w-[220px] sm:w-[260px] xl:w-[280px] shrink-0 flex-col bg-white rounded-[2rem] sm:rounded-[2.5rem] border border-black/[0.04] overflow-hidden transition-all duration-700 shadow-sm hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.12)] snap-start"
             >
               <div className="relative h-[140px] sm:h-[180px] w-full overflow-hidden bg-black">
                 <img
@@ -149,18 +149,18 @@ export function OCCTrendingClubs({ clubs }: { clubs: OCCTrendingClub[] }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <div className="absolute bottom-3 left-4 sm:bottom-4 sm:left-6 flex items-center gap-2">
                    <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-[#00E87A] animate-pulse shadow-[0_0_10px_#00E87A]" />
-                   <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white">Live Now</span>
+                   <span className="text-[9px] sm:text-[10px] font-medium uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white">Live Now</span>
                 </div>
               </div>
 
               <div className="p-5 sm:p-8 flex flex-col gap-4 sm:gap-6">
                 <div className="flex flex-col gap-1">
-                  <h3 className="line-clamp-1 text-[15px] sm:text-[17px] font-bold text-black tracking-tighter group-hover:text-[#5227FF] transition-colors font-sans uppercase">
+                  <h3 className="line-clamp-1 text-[15px] sm:text-[17px] font-semibold text-black tracking-tight group-hover:text-[#5227FF] transition-colors font-sans uppercase">
                     {club.label}
                   </h3>
                   <div className="flex items-center gap-2 text-black/30">
                     <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider font-sans">
+                    <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider font-sans">
                       {club.memberCount || "2.4k"} Elite
                     </span>
                   </div>
@@ -169,7 +169,7 @@ export function OCCTrendingClubs({ clubs }: { clubs: OCCTrendingClub[] }) {
                 <button 
                   onClick={() => handleJoin(club.slug, club.id)}
                   disabled={joiningId === club.id}
-                  className="w-full flex items-center justify-center gap-2 py-3 sm:py-4 bg-black text-white rounded-xl sm:rounded-2xl text-[9px] sm:text-[11px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] transition-all hover:bg-[#5227FF] hover:shadow-xl active:scale-95 font-sans disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 py-3 sm:py-4 bg-black !text-white rounded-xl sm:rounded-2xl text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] transition-all hover:bg-[#5227FF] hover:shadow-xl active:scale-95 font-sans disabled:opacity-50"
                 >
                   {joiningId === club.id ? (
                     <div className="h-3 w-3 sm:h-4 sm:w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />

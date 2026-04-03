@@ -1,10 +1,5 @@
-import dynamic from "next/dynamic";
-
-const FashionPage = dynamic(
-  () => import("@/app/components/fashion/FashionPage").then((mod) => mod.FashionPage),
-  { ssr: false },
-);
+import { ClubOnboardingEntry } from "@/components/club-onboarding/ClubOnboardingEntry";
 
 export default function Page() {
-  return <FashionPage />;
+  return <ClubOnboardingEntry clubSlug="fashion" />;
 }

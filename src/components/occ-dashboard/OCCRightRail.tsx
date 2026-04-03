@@ -91,7 +91,7 @@ export function OCCRightRail({ events, trending, opportunities }: OCCRightRailPr
   };
 
   return (
-    <div className="flex flex-col gap-12 pr-4 overflow-y-auto scrollbar-hide pb-12">
+    <div className="flex flex-col gap-10 pr-0 pl-0 overflow-y-auto scrollbar-hide pb-12 xl:pr-1">
       {/* Upcoming Events Section */}
       <motion.section 
         variants={sectionVariants}
