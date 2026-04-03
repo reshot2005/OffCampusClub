@@ -7,295 +7,341 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id                     String              @id @default(cuid())
-  fullName               String
-  collegeName            String
-  phoneNumber            String              @unique
-  email                  String              @unique
-  password               String
-  emailVerified          DateTime?
-  avatar                 String?
-  bio                    String?
-  city                   String?
-  graduationYear         Int?
-  createdAt              DateTime            @default(now())
-  updatedAt              DateTime            @updatedAt
-  approvalStatus         ApprovalStatus      @default(APPROVED)
-  clubManagedId          String?
-  referralCode           String?             @unique
-  referredBy             String?
-  role                   UserRole            @default(STUDENT)
-  suspended              Boolean             @default(false)
-  announcements          Announcement[]
-  memberships            ClubMembership[]
-  clubManaged            Club?               @relation("ClubHeader")
-  postComments           Comment[]
-  registrations          EventRegistration[]
-  gigsApplied            GigApplication[]
-  notifications          Notification[]
-  postLikes              PostLike[]
-  posts                  Post[]
-  shares                 Share[]
-  follows                Follow[]            @relation("follows")
-  followedBy             Follow[]            @relation("followedBy")
-  referralStatsAsHeader  ReferralStat[]      @relation("ReferralHeader")
-  referralStatsAsStudent ReferralStat[]      @relation("ReferralStudent")
-  referrer               User?               @relation("ReferralRelation", fields: [referredBy], references: [id])
-  referrals              User[]              @relation("ReferralRelation")
-  commentReports         CommentReport[]
-  pendingLeadClubId      String?
-  pendingLeadClub        Club?               @relation("PendingLeadApplicants", fields: [pendingLeadClubId], references: [id], onDelete: SetNull)
+model AdminActionLog {
+  id         String   @id
+  adminId    String
+  actionType String
+  targetType String
+  targetId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+}
 
-  @@map("users")
+model Category {
+  id        String   @id
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  Club      Club[]
 }
 
 model Club {
-  id            String           @id @default(cuid())
-  slug          String           @unique
-  name          String
-  icon          String
-  description   String
-  theme         String
-  coverImage    String?
-  memberCount   Int              @default(0)
-  createdAt     DateTime         @default(now())
-  headerId      String?          @unique
-  postingFrozen Boolean          @default(false)
-  announcements Announcement[]
-  members       ClubMembership[]
-  header        User?            @relation("ClubHeader", fields: [headerId], references: [id])
-  events        Event[]
-  posts         Post[]
-  referralStats ReferralStat[]
-  pendingLeadApplicants User[] @relation("PendingLeadApplicants")
+  id                                String             @id
+  name                              String
+  slug                              String             @unique
+  description                       String
+  categoryId                        String?
+  university                        String?
+  locationName                      String?
+  latitude                          Float?
+  longitude                         Float?
+  logoUrl                           String?
+  bannerUrl                         String?
+  isActive                          Boolean            @default(true)
+  approvalStatus                    ClubApprovalStatus @default(PENDING)
+  isVerified                        Boolean            @default(false)
+  reviewedAt                        DateTime?
+  reviewedByAdminId                 String?
+  rejectionReason                   String?
+  visibility                        ClubVisibility     @default(PUBLIC)
+  ownerId                           String
+  createdAt                         DateTime           @default(now())
+  updatedAt                         DateTime
+  Category                          Category?          @relation(fields: [categoryId], references: [id])
+  User_Club_ownerIdToUser           User               @relation("Club_ownerIdToUser", fields: [ownerId], references: [id], onDelete: Cascade)
+  User_Club_reviewedByAdminIdToUser User?              @relation("Club_reviewedByAdminIdToUser", fields: [reviewedByAdminId], references: [id])
 
-  @@map("clubs")
+  @@index([approvalStatus, createdAt])
+  @@index([approvalStatus, isActive])
+  @@index([slug])
+  @@index([university])
 }
 
-model ClubMembership {
-  id       String   @id @default(cuid())
-  userId   String
-  clubId   String
-  joinedAt DateTime @default(now())
-  role     String   @default("member")
-  club     Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, clubId])
-  @@map("club_memberships")
-}
-
-model Event {
-  id            String              @id @default(cuid())
-  clubId        String
-  title         String
-  description   String
-  date          DateTime
-  venue         String
-  price         Int                 @default(0)
-  maxCapacity   Int?
-  imageUrl      String              @default("")
-  createdAt     DateTime            @default(now())
-  registrations EventRegistration[]
-  club          Club                @relation(fields: [clubId], references: [id], onDelete: Cascade)
-
-  @@map("events")
-}
-
-model EventRegistration {
-  id        String   @id @default(cuid())
+model ClubJoinRequest {
+  id        String            @id
+  clubId    String
   userId    String
-  eventId   String
-  status    String   @default("registered")
-  createdAt DateTime @default(now())
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    JoinRequestStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime
 
-  @@unique([userId, eventId])
-  @@map("event_registrations")
+  @@unique([clubId, userId])
+  @@index([clubId])
+  @@index([clubId, status])
+  @@index([userId])
 }
 
-model Post {
-  id          String     @id @default(cuid())
-  userId      String
-  clubId      String
-  imageUrl    String?
-  caption     String?
-  likes       Int        @default(0)
-  createdAt   DateTime   @default(now())
-  content     String?
-  imageUrls   String[]   @default([])
-  likesCount  Int        @default(0)
-  sharesCount Int        @default(0)
-  type        String     @default("post")
-  hidden      Boolean    @default(false)
-  pinned      Boolean    @default(false)
-  comments    Comment[]
-  postLikes   PostLike[]
-  shares      Share[]
-  club        Club       @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+model ClubMember {
+  id             String         @id
+  clubId         String
+  userId         String
+  membershipRole MembershipRole @default(MEMBER)
+  joinedAt       DateTime       @default(now())
 
-  @@map("posts")
-}
-
-model PostLike {
-  id        String   @id @default(cuid())
-  postId    String
-  userId    String
-  createdAt DateTime @default(now())
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([postId, userId])
-  @@map("post_likes")
+  @@unique([clubId, userId])
+  @@index([clubId])
+  @@index([userId])
 }
 
 model Comment {
-  id        String   @id @default(cuid())
+  id        String   @id
   postId    String
-  userId    String
-  content   String
-  createdAt DateTime @default(now())
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reports   CommentReport[]
-
-  @@map("comments")
-}
-
-model CommentReport {
-  id          String   @id @default(cuid())
-  commentId   String
-  reporterId  String
-  reason      String
-  createdAt   DateTime @default(now())
-  comment     Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  reporter    User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
-
-  @@map("comment_reports")
-}
-
-
-model Announcement {
-  id        String   @id @default(cuid())
-  clubId    String
   authorId  String
-  title     String
   content   String
-  isPinned  Boolean  @default(false)
+  parentId  String?
   createdAt DateTime @default(now())
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  updatedAt DateTime
 
-  @@map("announcements")
-}
-
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  type      String
-  title     String
-  message   String
-  read      Boolean  @default(false)
-  data      Json?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("notifications")
-}
-
-model ReferralStat {
-  id           String   @id @default(cuid())
-  clubHeaderId String
-  studentId    String
-  registeredAt DateTime @default(now())
-  clubId       String
-  clubHeader   User     @relation("ReferralHeader", fields: [clubHeaderId], references: [id], onDelete: Cascade)
-  club         Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  student      User     @relation("ReferralStudent", fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@map("referral_stats")
+  @@index([postId])
 }
 
 model Gig {
-  id           String           @id @default(cuid())
-  title        String
-  description  String
-  payMin       Int
-  payMax       Int
-  clubId       String?
-  deadline     DateTime?
-  createdAt    DateTime         @default(now())
-  applications GigApplication[]
+  id               String           @id
+  title            String
+  slug             String           @unique
+  shortDescription String
+  fullDescription  String
+  category         String
+  pricing          String?
+  instructions     String?
+  requirements     String?
+  bannerUrl        String?
+  isActive         Boolean          @default(true)
+  isPublic         Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime
+  GigApplication   GigApplication[]
 
-  @@map("gigs")
+  @@index([category])
+  @@index([isActive, isPublic])
+  @@index([slug])
 }
 
 model GigApplication {
-  id        String   @id @default(cuid())
-  userId    String
-  gigId     String
-  status    String   @default("applied")
-  createdAt DateTime @default(now())
-  gig       Gig      @relation(fields: [gigId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                                          String               @id
+  userId                                      String?
+  gigId                                       String
+  name                                        String
+  email                                       String
+  phone                                       String
+  college                                     String
+  reason                                      String
+  relevantExperience                          String?
+  status                                      GigApplicationStatus @default(PENDING)
+  reviewedByAdminId                           String?
+  reviewedAt                                  DateTime?
+  createdAt                                   DateTime             @default(now())
+  updatedAt                                   DateTime
+  Gig                                         Gig                  @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  User_GigApplication_reviewedByAdminIdToUser User?                @relation("GigApplication_reviewedByAdminIdToUser", fields: [reviewedByAdminId], references: [id])
+  User_GigApplication_userIdToUser            User?                @relation("GigApplication_userIdToUser", fields: [userId], references: [id])
 
   @@unique([userId, gigId])
-  @@map("gig_applications")
+  @@index([email, gigId])
+  @@index([gigId, status])
+  @@index([status, createdAt])
+  @@index([userId, status])
 }
 
-model EmailOtpToken {
-  id           String     @id @default(cuid())
-  email        String
-  purpose      OtpPurpose
-  codeHash     String
-  attemptsLeft Int        @default(5)
-  expiresAt    DateTime
-  usedAt       DateTime?
-  createdAt    DateTime   @default(now())
-
-  @@index([email, purpose, expiresAt])
-  @@map("email_otp_tokens")
-}
-
-model Follow {
-  id          String   @id @default(cuid())
-  followerId  String
-  followingId String
-  createdAt   DateTime @default(now())
-  follower    User     @relation("follows", fields: [followerId], references: [id], onDelete: Cascade)
-  following   User     @relation("followedBy", fields: [followingId], references: [id], onDelete: Cascade)
-
-  @@unique([followerId, followingId])
-  @@map("follows")
-}
-
-model Share {
-  id        String   @id @default(cuid())
+model Like {
+  id        String   @id
   postId    String
   userId    String
   createdAt DateTime @default(now())
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("shares")
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  User      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([userId])
+}
+
+model Post {
+  id               String           @id
+  authorId         String
+  clubId           String?
+  content          String
+  imageUrl         String?
+  visibility       PostVisibility   @default(PUBLIC)
+  moderationStatus ModerationStatus @default(PUBLISHED)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime
+  deletedAt        DateTime?
+
+  @@index([authorId])
+  @@index([clubId, deletedAt, moderationStatus, createdAt])
+  @@index([clubId])
+  @@index([createdAt])
+  @@index([deletedAt, createdAt])
+  @@index([deletedAt])
+  @@index([moderationStatus, deletedAt, createdAt])
+}
+
+model PrivacySetting {
+  id                    String            @id
+  userId                String            @unique
+  profileVisibility     ProfileVisibility @default(PUBLIC)
+  showUniversity        Boolean           @default(true)
+  showClubMembership    Boolean           @default(true)
+  postVisibilityDefault PostVisibility    @default(PUBLIC)
+  updatedAt             DateTime
+}
+
+model Profile {
+  id          String   @id
+  userId      String   @unique
+  displayName String
+  bio         String?
+  university  String?
+  phoneNumber String?
+  hobbies     String?
+  avatarUrl   String?
+  coverUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id        String   @id
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Report {
+  id                String       @id
+  postId            String
+  reporterId        String
+  reason            String
+  description       String?
+  status            ReportStatus @default(PENDING)
+  reviewedByAdminId String?
+  reviewedAt        DateTime?
+  createdAt         DateTime     @default(now())
+
+  @@index([status, createdAt])
+  @@index([status])
+}
+
+model Share {
+  id        String   @id
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model User {
+  id                                                    String               @id
+  email                                                 String               @unique
+  passwordHash                                          String
+  role                                                  UserRole             @default(USER)
+  status                                                UserStatus           @default(ACTIVE)
+  isActive                                              Boolean              @default(true)
+  createdAt                                             DateTime             @default(now())
+  updatedAt                                             DateTime
+  Club_Club_ownerIdToUser                               Club[]               @relation("Club_ownerIdToUser")
+  Club_Club_reviewedByAdminIdToUser                     Club[]               @relation("Club_reviewedByAdminIdToUser")
+  GigApplication_GigApplication_reviewedByAdminIdToUser GigApplication[]     @relation("GigApplication_reviewedByAdminIdToUser")
+  GigApplication_GigApplication_userIdToUser            GigApplication[]     @relation("GigApplication_userIdToUser")
+  PasswordResetToken                                    PasswordResetToken[]
+  Profile                                               Profile?
+  RefreshToken                                          RefreshToken[]
+
+  @@index([role])
+  @@index([status])
+}
+
+model UserSetting {
+  id                      String   @id
+  userId                  String   @unique
+  themePreference         String   @default("system")
+  notificationPreferences Json     @default("{}")
+  updatedAt               DateTime
 }
 
 enum UserRole {
-  STUDENT
-  CLUB_HEADER
-  ADMIN
+  USER
+  CLUB_ADMIN
+  PLATFORM_ADMIN
+  SUPER_ADMIN
 }
 
-enum ApprovalStatus {
+enum ClubApprovalStatus {
   PENDING
   APPROVED
   REJECTED
 }
 
-enum OtpPurpose {
-  REGISTER
-  RESET_PASSWORD
+enum ClubVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum GigApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum JoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ModerationStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+  REMOVED
+}
+
+enum PostVisibility {
+  PUBLIC
+  CLUB
+  MEMBERS_ONLY
+}
+
+enum ProfileVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum ReportStatus {
+  PENDING
+  IN_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  BANNED
 }

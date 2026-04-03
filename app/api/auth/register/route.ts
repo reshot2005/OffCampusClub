@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -16,17 +17,28 @@ function generateIndianPhoneNumber(): string {
 export async function POST(req: NextRequest) {
   try {
     if (!process.env.DATABASE_URL) {
-      throw new Error("DATABASE_URL is not configured");
+      return NextResponse.json({ error: "Server is not configured" }, { status: 503 });
     }
     if (!process.env.JWT_SECRET) {
-      throw new Error("JWT_SECRET is not configured");
+      return NextResponse.json({ error: "Server is not configured" }, { status: 503 });
     }
 
-    const body = await req.json();
-    const validated = registerSchema.parse(body);
-    const referralCode = typeof body.referralCode === "string" ? body.referralCode.trim() : "";
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
 
-    // Verify OTP before creating the account.
+    const validated = registerSchema.parse(body);
+    const referralCode =
+      typeof body === "object" &&
+      body !== null &&
+      "referralCode" in body &&
+      typeof (body as { referralCode?: unknown }).referralCode === "string"
+        ? (body as { referralCode: string }).referralCode.trim()
+        : "";
+
     const otpEmail = validated.email;
     const otpPurpose = "REGISTER" as const;
 
@@ -57,16 +69,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid or expired OTP" }, { status: 400 });
     }
 
-    await prisma.emailOtpToken.update({
-      where: { id: latestOtpToken.id },
-      data: { usedAt: new Date() },
-    });
-
     const collegeName = validated.collegeName ?? "Unknown College";
 
     let phoneNumber = validated.phoneNumber;
     if (!phoneNumber) {
-      // Try to avoid unique collisions.
       for (let i = 0; i < 5; i++) {
         const candidate = generateIndianPhoneNumber();
         const exists = await prisma.user
@@ -87,8 +93,10 @@ export async function POST(req: NextRequest) {
     });
 
     if (existingUser) {
-      // Avoid user enumeration by not disclosing whether email vs phone caused the conflict.
-      return NextResponse.json({ error: "Registration failed" }, { status: 409 });
+      return NextResponse.json(
+        { error: "An account with this email or phone already exists. Try logging in." },
+        { status: 409 },
+      );
     }
 
     const hashedPassword = await bcrypt.hash(validated.password, 12);
@@ -119,40 +127,48 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Auto-login after registration.
+    await prisma.emailOtpToken.update({
+      where: { id: latestOtpToken.id },
+      data: { usedAt: new Date() },
+    });
+
     if (referrerUser?.clubManaged?.id) {
-      await prisma.clubMembership.upsert({
-        where: { userId_clubId: { userId: user.id, clubId: referrerUser.clubManaged.id } },
-        update: {},
-        create: { userId: user.id, clubId: referrerUser.clubManaged.id },
-      });
+      try {
+        await prisma.clubMembership.upsert({
+          where: { userId_clubId: { userId: user.id, clubId: referrerUser.clubManaged.id } },
+          update: {},
+          create: { userId: user.id, clubId: referrerUser.clubManaged.id },
+        });
 
-      await prisma.referralStat.create({
-        data: {
-          clubHeaderId: referrerUser.id,
-          studentId: user.id,
-          clubId: referrerUser.clubManaged.id,
-        },
-      });
+        await prisma.referralStat.create({
+          data: {
+            clubHeaderId: referrerUser.id,
+            studentId: user.id,
+            clubId: referrerUser.clubManaged.id,
+          },
+        });
 
-      await prisma.notification.create({
-        data: {
-          userId: referrerUser.id,
-          type: "new-referral",
-          title: "New student joined",
-          message: `${user.fullName} joined using your referral code.`,
-          data: { studentId: user.id },
-        },
-      });
+        await prisma.notification.create({
+          data: {
+            userId: referrerUser.id,
+            type: "new-referral",
+            title: "New student joined",
+            message: `${user.fullName} joined using your referral code.`,
+            data: { studentId: user.id },
+          },
+        });
 
-      await pusherServer.trigger(`header-${referrerUser.id}`, "new-member", {
-        member: {
-          id: user.id,
-          fullName: user.fullName,
-          collegeName: user.collegeName,
-          registeredAt: new Date().toISOString(),
-        },
-      });
+        await pusherServer.trigger(`header-${referrerUser.id}`, "new-member", {
+          member: {
+            id: user.id,
+            fullName: user.fullName,
+            collegeName: user.collegeName,
+            registeredAt: new Date().toISOString(),
+          },
+        });
+      } catch (referralErr) {
+        console.warn("[auth/register] referral/Pusher side-effects failed (non-critical):", referralErr);
+      }
     }
 
     const token = await signAuthToken({
@@ -164,13 +180,39 @@ export async function POST(req: NextRequest) {
     });
     const response = NextResponse.json({ success: true, user }, { status: 201 });
     response.cookies.set("occ-token", token, authCookieOptions);
-    return response;
   } catch (error) {
     console.error("[auth/register] error:", error);
+
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: error.issues[0]?.message ?? "Invalid form data" }, { status: 400 });
+      return NextResponse.json(
+        { error: error.issues[0]?.message ?? "Invalid form data" },
+        { status: 400 },
+      );
     }
 
-    return NextResponse.json({ error: "Registration failed" }, { status: 500 });
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return NextResponse.json(
+          { error: "An account with this email or phone already exists. Try logging in." },
+          { status: 409 },
+        );
+      }
+      if (error.code === "P2003") {
+        return NextResponse.json(
+          { error: "Foreign key constraint failed. Related record not found." },
+          { status: 400 },
+        );
+      }
+      return NextResponse.json(
+        { error: `Database error (${error.code}): ${error.message}` },
+        { status: 500 },
+      );
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { error: `Registration failed: ${message}. Check server logs.` },
+      { status: 500 },
+    );
   }
 }
