@@ -2,6 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+
+function useDebouncedValue<T>(value: T, ms: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebounced(value), ms);
+    return () => window.clearTimeout(t);
+  }, [value, ms]);
+  return debounced;
+}
 import { OCCPostCard, type OCCPost } from "@/components/occ-dashboard/OCCPostCard";
 import { resolvePostImageUrlForFeed } from "@/lib/postImageUrl";
 
@@ -52,6 +61,7 @@ function toCards(posts: ApiPost[]): OCCPost[] {
 export function ExploreClient() {
   const searchParams = useSearchParams();
   const q = (searchParams.get("q") ?? "").trim();
+  const debouncedQ = useDebouncedValue(q, 300);
   const [posts, setPosts] = useState<ApiPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,10 +72,13 @@ export function ExploreClient() {
     setError(null);
     (async () => {
       try {
-        const res = await fetch(`/api/explore/posts?q=${encodeURIComponent(q)}`, {
-          credentials: "include",
-          signal: ac.signal,
-        });
+        const res = await fetch(
+          `/api/explore/posts?q=${encodeURIComponent(debouncedQ)}&limit=30`,
+          {
+            credentials: "include",
+            signal: ac.signal,
+          },
+        );
         if (!res.ok) throw new Error("Failed to load");
         const data = (await res.json()) as { posts: ApiPost[] };
         if (!ac.signal.aborted) setPosts(data.posts);
@@ -78,7 +91,7 @@ export function ExploreClient() {
       }
     })();
     return () => ac.abort();
-  }, [q]);
+  }, [debouncedQ]);
 
   const cards = useMemo(() => toCards(posts), [posts]);
 

@@ -45,9 +45,13 @@ export function PostComposer({ clubId }: { clubId: string }) {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("purpose", "posts");
       const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
+      const data = (await res.json()) as { url?: string; error?: string; detail?: string };
       if (!res.ok) throw new Error(data.detail || data.error || "Upload failed");
+      if (!data.url || typeof data.url !== "string") {
+        throw new Error("Upload did not return an image URL");
+      }
       setImageUrl(data.url);
       if (data.warning) {
         toast.warning(data.warning, { duration: 8000 });
@@ -70,6 +74,10 @@ export function PostComposer({ clubId }: { clubId: string }) {
   const submit = async () => {
     if (!content.trim() && !imageUrl) {
       toast.error("Add some content or a photo");
+      return;
+    }
+    if (imagePreview && !imageUrl.trim()) {
+      toast.error("Wait for the image to finish uploading, or remove it");
       return;
     }
     setLoading(true);
@@ -212,7 +220,12 @@ export function PostComposer({ clubId }: { clubId: string }) {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={submit}
-            disabled={loading || uploading || (!content.trim() && !imageUrl)}
+            disabled={
+              loading ||
+              uploading ||
+              (!content.trim() && !imageUrl) ||
+              (Boolean(imagePreview) && !imageUrl.trim())
+            }
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#5227FF] to-[#2B4BFF] px-8 py-3 text-sm font-semibold text-white shadow-[0_0_20px_rgba(82,39,255,0.4)] hover:shadow-[0_0_30px_rgba(82,39,255,0.6)] transition-shadow disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Send className="h-4 w-4" />

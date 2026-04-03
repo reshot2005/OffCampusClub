@@ -4,13 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { pusherServer } from "@/lib/pusher";
 import { removeStoredPostImage } from "@/lib/postImageCleanup";
+import { postStoredImageUrlSchema } from "@/lib/validations";
 
 const patchSchema = z.object({
   hidden: z.boolean().optional(),
   pinned: z.boolean().optional(),
   caption: z.string().max(2000).optional().nullable(),
   content: z.string().max(5000).optional().nullable(),
-  imageUrl: z.union([z.string().url(), z.literal("")]).optional().nullable(),
+  imageUrl: z.union([postStoredImageUrlSchema, z.null()]).optional(),
   type: z.string().optional(),
 });
 

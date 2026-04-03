@@ -3,6 +3,9 @@ import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { displayPostLikes } from "@/lib/socialDisplay";
 
+const MAX_LIMIT = 50;
+const DEFAULT_LIMIT = 30;
+
 /** Realtime search for Explore: club header posts, keyword matches caption, content, club name/slug (e.g. “bikers”). */
 export async function GET(req: NextRequest) {
   const user = await getSessionUser();
@@ -11,29 +14,58 @@ export async function GET(req: NextRequest) {
   }
 
   const q = (req.nextUrl.searchParams.get("q") || "").trim();
+  const cursor = (req.nextUrl.searchParams.get("cursor") || "").trim() || undefined;
+  const limitRaw = Number(req.nextUrl.searchParams.get("limit"));
+  const limit = Number.isFinite(limitRaw)
+    ? Math.min(MAX_LIMIT, Math.max(1, Math.floor(limitRaw)))
+    : DEFAULT_LIMIT;
 
-  const posts = await prisma.post.findMany({
-    where: {
-      hidden: false,
-      user: { role: "CLUB_HEADER" },
-      ...(q
-        ? {
-            OR: [
-              { caption: { contains: q, mode: "insensitive" } },
-              { content: { contains: q, mode: "insensitive" } },
-              { club: { name: { contains: q, mode: "insensitive" } } },
-              { club: { slug: { contains: q, mode: "insensitive" } } },
-            ],
-          }
-        : {}),
-    },
-    take: 50,
-    include: { user: true, club: true },
+  const baseWhere = {
+    hidden: false,
+    user: { role: "CLUB_HEADER" as const },
+    ...(q
+      ? {
+          OR: [
+            { caption: { contains: q, mode: "insensitive" as const } },
+            { content: { contains: q, mode: "insensitive" as const } },
+            { club: { name: { contains: q, mode: "insensitive" as const } } },
+            { club: { slug: { contains: q, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
+  };
+
+  const rows = await prisma.post.findMany({
+    where: baseWhere,
+    take: limit + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      userId: true,
+      clubId: true,
+      caption: true,
+      content: true,
+      imageUrl: true,
+      likesCount: true,
+      likes: true,
+      sharesCount: true,
+      createdAt: true,
+      user: {
+        select: { id: true, fullName: true, avatar: true },
+      },
+      club: {
+        select: { id: true, name: true, slug: true },
+      },
+    },
   });
 
-  return NextResponse.json({
-    posts: posts.map((p) => ({
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  const nextCursor = hasMore ? page[page.length - 1]?.id ?? null : null;
+
+  const payload = {
+    posts: page.map((p) => ({
       id: p.id,
       userId: p.userId,
       clubId: p.clubId,
@@ -52,5 +84,13 @@ export async function GET(req: NextRequest) {
         ? { id: p.club.id, name: p.club.name, slug: p.club.slug }
         : null,
     })),
+    nextCursor,
+  };
+
+  return NextResponse.json(payload, {
+    headers: {
+      // Authenticated feed: private cache only (avoid shared-cache cross-user leakage).
+      "Cache-Control": "private, max-age=15, stale-while-revalidate=60",
+    },
   });
 }

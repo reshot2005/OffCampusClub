@@ -153,6 +153,32 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
+/** Only routes that need auth redirects / staff gates — skips marketing pages & static-like paths. */
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+  matcher: [
+    "/login",
+    "/register",
+    "/club-header/:path*",
+    "/dashboard/:path*",
+    "/clubs/:path*",
+    "/events/:path*",
+    "/gigs/:path*",
+    "/profile/:path*",
+    "/explore",
+    "/explore/:path*",
+    "/notifications/:path*",
+    "/e-clubs",
+    "/e-clubs/:path*",
+    "/header/:path*",
+    "/pending/:path*",
+    "/admin",
+    "/admin/:path*",
+    // Must match default NEXT_PUBLIC_OCC_STAFF_PREFIX; update both if you change the env prefix.
+    "/k9xm2p7qv4nw8-stf",
+    "/k9xm2p7qv4nw8-stf/:path*",
+    "/staff-gate-internal",
+    "/staff-gate-internal/:path*",
+    "/staff-panel-internal",
+    "/staff-panel-internal/:path*",
+  ],
 };

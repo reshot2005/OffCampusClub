@@ -46,7 +46,13 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { clubId, imageUrl, imageUrls, caption, content, type } = postCreateSchema.parse(body);
+  const parsed = postCreateSchema.parse(body);
+  const { clubId, imageUrls, caption, content, type } = parsed;
+  const imageUrl =
+    typeof parsed.imageUrl === "string" && parsed.imageUrl.trim().length > 0
+      ? parsed.imageUrl.trim()
+      : null;
+
   const resolvedClubId = user.clubManaged?.id || clubId;
   if (!resolvedClubId) return NextResponse.json({ error: "No club selected" }, { status: 400 });
 

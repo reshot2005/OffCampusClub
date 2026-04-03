@@ -15,9 +15,7 @@ export function premiumClubImageForName(name: string): string {
 }
 
 function getUploadsCdnBase(): string | null {
-  const b =
-    process.env.NEXT_PUBLIC_UPLOADS_CDN_BASE?.trim() ||
-    process.env.NEXT_PUBLIC_R2_UPLOADS_BASE?.trim();
+  const b = process.env.NEXT_PUBLIC_UPLOADS_CDN_BASE?.trim();
   if (!b) return null;
   return b.replace(/\/$/, "");
 }
@@ -41,7 +39,7 @@ export function resolvePostImageUrlForFeed(
 ): string {
   const fallback = premiumClubImageForName(clubName);
   const raw = imageUrl?.trim();
-  if (!raw || raw === "/" || raw.length < 5) return fallback;
+  if (!raw || raw === "/") return fallback;
 
   if (raw.startsWith("/uploads/")) {
     const abs = absoluteUrlForUploadPath(raw);

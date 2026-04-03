@@ -32,7 +32,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const raw = await req.json().catch(() => ({}));
-  const patch = postUpdateSchema.parse(raw);
+  const parsed = postUpdateSchema.safeParse(raw);
+  if (!parsed.success) {
+    const first = parsed.error.flatten().fieldErrors;
+    const msg =
+      Object.entries(first)
+        .map(([k, v]) => (Array.isArray(v) ? `${k}: ${v[0]}` : k))
+        .join("; ") || "Invalid request body";
+    return NextResponse.json({ error: msg, issues: parsed.error.flatten() }, { status: 400 });
+  }
+  const patch = parsed.data;
 
   const prevImage = post.imageUrl;
   const nextImage =

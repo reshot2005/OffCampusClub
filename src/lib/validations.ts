@@ -112,10 +112,19 @@ export const postCreateSchema = z.object({
   type: z.string().optional(),
 });
 
+/** Allowed in DB: full https URL, site-relative path (e.g. /uploads/...), or "" to clear. */
+export const postStoredImageUrlSchema = z.string().max(2048).refine(
+  (s) =>
+    s === "" ||
+    /^https?:\/\//i.test(s) ||
+    (s.startsWith("/") && s.length > 1 && !s.startsWith("//")),
+  { message: "Image must be https URL, a path starting with /, or empty" },
+);
+
 export const postUpdateSchema = z.object({
   caption: z.string().max(2000).optional().nullable(),
   content: z.string().max(5000).optional().nullable(),
-  imageUrl: z.union([z.string().url(), z.literal("")]).optional().nullable(),
+  imageUrl: z.union([postStoredImageUrlSchema, z.null()]).optional(),
   type: z.string().optional(),
 });
 

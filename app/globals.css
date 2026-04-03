@@ -1,3 +1,7 @@
+/* External @import must be first — before tailwind — or the bundler emits @import after other rules. */
+@import url("https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=DM+Mono:wght@400;500&family=Oswald:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+
 @import "tailwindcss";
 @import "../src/styles/fonts.css";
 @import "../src/styles/theme.css";

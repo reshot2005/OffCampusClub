@@ -4,7 +4,7 @@ import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
-import { isR2Configured, uploadBufferToR2 } from "@/lib/r2";
+import { isCloudinaryConfigured, uploadImageBuffer } from "@/lib/cloudinary";
 
 async function saveToLocalDisk(userId: string, ext: string, bytes: Buffer): Promise<string> {
   const shortName = `${randomUUID()}.${ext}`;
@@ -35,39 +35,39 @@ export async function POST(req: NextRequest) {
   const bytes = Buffer.from(await file.arrayBuffer());
   const isDev = process.env.NODE_ENV === "development";
 
-  // 1) Cloudflare R2
-  if (isR2Configured()) {
-    const key = `posts/${user.id}/${randomUUID()}.${ext}`;
+  const purpose = String(formData.get("purpose") || "posts").toLowerCase();
+  const folder =
+    purpose === "avatar" || purpose === "profile"
+      ? "occ/avatars"
+      : purpose === "post" || purpose === "posts"
+        ? "occ/posts"
+        : `occ/${purpose.replace(/[^a-z0-9/_-]/gi, "_").slice(0, 32) || "uploads"}`;
+
+  // 1) Cloudinary (recommended for production)
+  if (isCloudinaryConfigured()) {
     try {
-      const url = await uploadBufferToR2({
-        key,
-        body: bytes,
+      const url = await uploadImageBuffer({
+        buffer: bytes,
+        folder,
         contentType: file.type || "image/jpeg",
       });
       return NextResponse.json({ success: true, url });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.error("[upload] R2 failed:", e);
+      console.error("[upload] Cloudinary failed:", e);
       if (isDev) {
         try {
           const url = await saveToLocalDisk(user.id, ext, bytes);
-          console.warn(
-            "[upload] Dev fallback: saved to disk (fix R2 env/token). Error was:",
-            msg,
-          );
-          return NextResponse.json({
-            success: true,
-            url,
-            warning:
-              "Uploaded to local /uploads (R2 failed — check R2 token permissions, Account ID, and terminal log).",
-          });
+          console.warn("[upload] Dev fallback: saved to disk. Cloudinary error:", msg);
+          // No `warning` in dev — avoids toast spam; fix CLOUDINARY_* or rely on local /uploads.
+          return NextResponse.json({ success: true, url });
         } catch (localErr) {
           console.error("[upload] Local fallback failed:", localErr);
         }
       }
       return NextResponse.json(
         {
-          error: "Image upload failed (R2). Check Account ID, API token (Read+Write), and bucket name.",
+          error: "Image upload failed (Cloudinary). Check CLOUDINARY_CLOUD_NAME, API key, and secret.",
           detail: isDev ? msg : undefined,
         },
         { status: 500 },
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
   // 2) Vercel Blob
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     try {
-      const fileName = `posts/${user.id}/${randomUUID()}.${ext}`;
+      const fileName = `uploads/${user.id}/${randomUUID()}.${ext}`;
       const blob = await put(fileName, file, {
         access: "public",
         contentType: file.type || "image/jpeg",
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 3) Local disk — development without R2/Blob
+  // 3) Local disk — development without cloud
   if (isDev) {
     try {
       const url = await saveToLocalDisk(user.id, ext, bytes);
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(
     {
       error:
-        "Image uploads are not configured. Set R2 (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_BASE_URL) or BLOB_READ_WRITE_TOKEN.",
+        "Image uploads are not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, or BLOB_READ_WRITE_TOKEN.",
     },
     { status: 503 },
   );

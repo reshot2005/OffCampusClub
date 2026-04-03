@@ -43,6 +43,7 @@ export function ProfileForm({ initialValues }: { initialValues: ProfileFormIniti
     try {
       const fd = new FormData();
       fd.set("file", file);
+      fd.set("purpose", "avatar");
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = (await res.json()) as { success?: boolean; url?: string; error?: string };
       if (!res.ok || !data.url) {
@@ -110,8 +111,9 @@ export function ProfileForm({ initialValues }: { initialValues: ProfileFormIniti
         <div className="flex flex-col gap-2">
           <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#D4AF37]">Profile photo</p>
           <p className="text-xs text-black/45 max-w-sm">
-            JPG, PNG, WebP or GIF — max 5MB. On Vercel, set{" "}
-            <code className="rounded bg-black/[0.05] px-1 text-[11px]">BLOB_READ_WRITE_TOKEN</code> for cloud
+            JPG, PNG, WebP or GIF — max 5MB.             Production: set{" "}
+            <code className="rounded bg-black/[0.05] px-1 text-[11px]">CLOUDINARY_*</code> (or{" "}
+            <code className="rounded bg-black/[0.05] px-1 text-[11px]">BLOB_READ_WRITE_TOKEN</code>) for cloud
             storage.
           </p>
           <div className="flex flex-wrap gap-2">

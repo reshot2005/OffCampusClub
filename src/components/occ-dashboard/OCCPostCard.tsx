@@ -12,8 +12,9 @@ import {
   Flag
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { avatarSrc } from "@/lib/avatar";
+import { premiumClubImageForName } from "@/lib/postImageUrl";
 import { pusherClient } from "@/lib/pusher";
 
 export type OCCPost = {
@@ -83,8 +84,15 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
   const [saved, setSaved] = useState(false);
   
   const [isLoaded, setIsLoaded] = useState(false);
+  /** True only if both the post URL and premium fallback failed to load. */
   const [imgError, setImgError] = useState(false);
+  const [mediaSrc, setMediaSrc] = useState(post.imageUrl);
   const imgRef = useRef<HTMLImageElement>(null);
+
+  const premiumFallback = useMemo(
+    () => premiumClubImageForName(post.clubName || ""),
+    [post.clubName],
+  );
 
   // Comments state
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
@@ -95,6 +103,12 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
   useEffect(() => {
     setLikeCount(post.likeCount);
   }, [post.id, post.likeCount]);
+
+  useEffect(() => {
+    setMediaSrc(post.imageUrl);
+    setImgError(false);
+    setIsLoaded(false);
+  }, [post.id, post.imageUrl]);
 
   // REALTIME - Listening for likes, shares, AND comments
   useEffect(() => {
@@ -127,6 +141,12 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
   };
 
   const handleImageError = () => {
+    if (mediaSrc !== premiumFallback) {
+      setMediaSrc(premiumFallback);
+      setIsLoaded(false);
+      setImgError(false);
+      return;
+    }
     setIsLoaded(true);
     setImgError(true);
   };
@@ -229,7 +249,7 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
             <div 
               className="absolute inset-0 opacity-25 blur-[60px] scale-150 pointer-events-none transition-opacity duration-1000"
               style={{ 
-                backgroundImage: `url(${post.imageUrl})`,
+                backgroundImage: `url(${mediaSrc})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 opacity: isLoaded ? 0.15 : 0
@@ -249,7 +269,7 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
           ) : (
             <motion.img 
               ref={imgRef}
-              src={post.imageUrl} 
+              src={mediaSrc} 
               alt="" 
               onLoad={handleImageLoad}
               onError={handleImageError}

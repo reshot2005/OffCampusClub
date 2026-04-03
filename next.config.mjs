@@ -1,14 +1,33 @@
 import { fileURLToPath } from "node:url";
+import bundleAnalyzer from "@next/bundle-analyzer";
 
 const staffPrefix = (process.env.NEXT_PUBLIC_OCC_STAFF_PREFIX || "/k9xm2p7qv4nw8-stf").replace(
   /\/$/,
   "",
 );
 
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+  /** Set ANALYZE_OPEN=true to auto-open the treemap in a browser after build. */
+  openAnalyzer: process.env.ANALYZE_OPEN === "true",
+});
+
+/** Optional: resolve legacy DB paths `/uploads/...` to a public CDN base (set in Vercel if needed). */
+const uploadsCdnBase = process.env.NEXT_PUBLIC_UPLOADS_CDN_BASE?.trim() || "";
+
 /** @type {import("next").NextConfig} */
 const nextConfig = {
-  // Enable gzip + brotli compression for all responses
   compress: true,
+  productionBrowserSourceMaps: false,
+  // Note: do not use compiler.removeConsole here — it breaks `next dev --turbo` (Next.js 14).
+
+  env: {
+    ...(uploadsCdnBase
+      ? {
+          NEXT_PUBLIC_UPLOADS_CDN_BASE: uploadsCdnBase.replace(/\/$/, ""),
+        }
+      : {}),
+  },
 
   async rewrites() {
     return [
@@ -19,12 +38,13 @@ const nextConfig = {
     ];
   },
 
-  // Next/Image: serve WebP/AVIF, optimize responsive sizes, allow R2 CDN
   images: {
     formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 60,
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
+      { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "pub-bfaeaa580da54d41ac88fa17561fb6c9.r2.dev" },
       { protocol: "https", hostname: "i.pravatar.cc" },
       { protocol: "https", hostname: "images.unsplash.com" },
@@ -34,19 +54,44 @@ const nextConfig = {
 
   experimental: {
     typedRoutes: false,
+    optimizePackageImports: ["framer-motion", "lucide-react", "date-fns"],
   },
+
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-DNS-Prefetch-Control", value: "on" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+        ],
+      },
+      {
+        source: "/static/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
+  },
+
   typescript: {
-    // This repo contains some Vite-era code and third-party typing mismatches.
-    // For deployment, we prefer runtime correctness over build-time type failures.
     ignoreBuildErrors: true,
   },
-  webpack: (config) => {
+  webpack: (config, { dev }) => {
     config.resolve.alias = {
       ...(config.resolve.alias ?? {}),
       "react-router": fileURLToPath(new URL("./src/lib/router-compat.tsx", import.meta.url)),
     };
+    // Windows dev: avoid intermittent ENOENT on .next/cache/webpack pack rename (PackFileCacheStrategy).
+    if (dev && process.platform === "win32") {
+      config.cache = { type: "memory" };
+    }
     return config;
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

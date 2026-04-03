@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "dev:turbo": "next dev --turbo",
     "build": "next build",
+    "analyze": "cross-env ANALYZE=true next build",
+    "analyze:open": "cross-env ANALYZE=true ANALYZE_OPEN=true next build",
     "start": "next start",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
@@ -13,7 +16,6 @@
     "db:seed": "prisma db seed"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1023.0",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@hookform/resolvers": "^5.2.2",
@@ -54,6 +56,7 @@
     "bcryptjs": "^3.0.2",
     "canvas-confetti": "1.9.4",
     "class-variance-authority": "0.7.1",
+    "cloudinary": "^2.9.0",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
     "date-fns": "3.6.0",
@@ -95,6 +98,7 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^14.2.35",
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/vite": "4.1.12",
     "@types/bcryptjs": "^2.4.6",
@@ -105,6 +109,7 @@
     "@types/three": "^0.180.0",
     "@vitejs/plugin-react": "4.7.0",
     "autoprefixer": "^10.4.27",
+    "cross-env": "^7.0.3",
     "prisma": "^6.6.0",
     "tailwindcss": "4.1.12",
     "tsx": "^4.20.5",

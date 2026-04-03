@@ -1,6 +1,6 @@
-import { deleteR2ObjectByPublicUrl } from "@/lib/r2";
+import { deleteCloudinaryByUrl } from "@/lib/cloudinary";
 
-/** Remove stored image from R2 when a post is removed or image replaced. Fire-and-forget safe. */
+/** Remove stored image from Cloudinary when a post is removed or image replaced. Fire-and-forget safe. */
 export async function removeStoredPostImage(url: string | null | undefined): Promise<void> {
-  await deleteR2ObjectByPublicUrl(url);
+  await deleteCloudinaryByUrl(url);
 }

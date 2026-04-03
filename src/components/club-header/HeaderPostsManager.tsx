@@ -67,14 +67,14 @@ export function HeaderPostsManager() {
         }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "update");
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error || `Save failed (${res.status})`);
       }
       toast.success("Post updated");
       closeEdit();
       await load();
-    } catch {
-      toast.error("Could not save changes");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save changes");
     } finally {
       setSaving(false);
     }
@@ -166,7 +166,9 @@ export function HeaderPostsManager() {
         <div className="fixed inset-0 z-[300] flex items-end justify-center bg-black/70 p-4 sm:items-center">
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-[#0d1024] p-6 shadow-2xl">
             <h3 className="text-lg font-semibold text-white">Edit post</h3>
-            <p className="mt-1 text-xs text-white/45">Image URL must be a public https link (e.g. your R2 URL after upload).</p>
+            <p className="mt-1 text-xs text-white/45">
+            Image: full https URL (e.g. Cloudinary) or a path starting with / (e.g. /uploads/… from local dev).
+          </p>
             <label className="mt-4 block text-[10px] font-semibold uppercase tracking-wider text-white/40">Caption</label>
             <textarea
               value={caption}

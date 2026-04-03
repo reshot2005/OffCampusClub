@@ -1,8 +1,16 @@
+import dynamic from "next/dynamic";
 import { requireUser } from "@/lib/auth";
 import { OCCSidebar } from "@/components/occ-dashboard/OCCSidebar";
 import { OCCHeader } from "@/components/occ-dashboard/OCCHeader";
-import { DashboardPageTransition } from "@/components/occ-dashboard/DashboardPageTransition";
 import { headers } from "next/headers";
+
+const DashboardPageTransition = dynamic(
+  () =>
+    import("@/components/occ-dashboard/DashboardPageTransition").then(
+      (m) => m.DashboardPageTransition,
+    ),
+  { ssr: true },
+);
 export default async function DashboardLayout({
   children,
 }: Readonly<{
