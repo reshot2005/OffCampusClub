@@ -1,17 +1,13 @@
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  OCC_PREMIUM_CLUB_IMAGES,
+  resolvePostImageUrlForFeed,
+} from "@/lib/postImageUrl";
 import { OCCTrendingClubs } from "@/components/occ-dashboard/OCCStoriesRow";
 import { OCCPostCard } from "@/components/occ-dashboard/OCCPostCard";
 import { OCCRightRail } from "@/components/occ-dashboard/OCCRightRail";
-import { Filter, ListFilter, SlidersHorizontal, Sparkles } from "lucide-react";
-
-// NEW PREMIUM ASSETS
-const PREMIUM_ASSETS = {
-  bikers: "/premium-assets/club_bikers_premium_169_1775157327855.png",
-  music: "/premium-assets/club_music_premium_169_1775157345029.png",
-  football: "/premium-assets/club_football_premium_169_1775157363794.png",
-  photography: "/premium-assets/club_photography_premium_169_1775157399055.png"
-};
+import { SlidersHorizontal } from "lucide-react";
 
 function getTimeAgo(date: Date): string {
   const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
@@ -48,12 +44,11 @@ export default async function DashboardPage() {
   ]);
 
   const trendingClubs = (clubs.length ? clubs : []).map(c => {
-    let clubImg = c.coverImage || PREMIUM_ASSETS.bikers;
-    // Map existing club names to premium assets if coverImage is default/missing
-    if (c.name.includes("Biker")) clubImg = PREMIUM_ASSETS.bikers;
-    if (c.name.includes("Music")) clubImg = PREMIUM_ASSETS.music;
-    if (c.name.includes("Football")) clubImg = PREMIUM_ASSETS.football;
-    if (c.name.includes("Photography")) clubImg = PREMIUM_ASSETS.photography;
+    let clubImg = resolvePostImageUrlForFeed(c.coverImage, c.name);
+    if (c.name.includes("Biker")) clubImg = OCC_PREMIUM_CLUB_IMAGES.bikers;
+    if (c.name.includes("Music")) clubImg = OCC_PREMIUM_CLUB_IMAGES.music;
+    if (c.name.includes("Football")) clubImg = OCC_PREMIUM_CLUB_IMAGES.football;
+    if (c.name.includes("Photography")) clubImg = OCC_PREMIUM_CLUB_IMAGES.photography;
 
     return {
       id: c.id,
@@ -67,10 +62,7 @@ export default async function DashboardPage() {
   const feedPosts = (posts.length
     ? posts.map((p) => {
         const ago = getTimeAgo(p.createdAt);
-        let postImg = p.imageUrl || PREMIUM_ASSETS.bikers;
-        
-        // Final safety check: if imageUrl is just a slash or weird string, fallback
-        if (!postImg || postImg === "/" || postImg.length < 5) postImg = PREMIUM_ASSETS.bikers;
+        let postImg = resolvePostImageUrlForFeed(p.imageUrl, p.club?.name || "");
 
         return {
           id: p.id,
@@ -128,10 +120,10 @@ export default async function DashboardPage() {
       <div className="hidden lg:block w-[min(260px,24vw)] xl:w-[280px] 2xl:w-[300px] shrink-0 space-y-8 xl:space-y-10 min-w-0">
         <OCCRightRail 
           events={events.map(e => {
-             let evtImg = e.imageUrl || "";
+             let evtImg = resolvePostImageUrlForFeed(e.imageUrl, e.club.name);
              const ecName = (e.club.name || "").toLowerCase();
-             if (ecName.includes("biker")) evtImg = PREMIUM_ASSETS.bikers;
-             if (ecName.includes("photography")) evtImg = PREMIUM_ASSETS.photography;
+             if (ecName.includes("biker")) evtImg = OCC_PREMIUM_CLUB_IMAGES.bikers;
+             if (ecName.includes("photography")) evtImg = OCC_PREMIUM_CLUB_IMAGES.photography;
              return {
               id: e.id,
               title: e.title,
