@@ -71,7 +71,36 @@ export async function middleware(req: NextRequest) {
   const isStaffGate = isStaffGatePath(pathname);
   const isHeaderPath = pathname.startsWith("/header");
   const isPendingPath = pathname.startsWith("/pending");
+  const isOnboardingPath = pathname === "/onboarding" || pathname.startsWith("/onboarding/");
   const requiresAuth = isProtected || isStaffPanel || isAdminCP || isHeaderPath || isPendingPath;
+
+  if (isOnboardingPath) {
+    if (!token) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("redirect", "/onboarding");
+      return NextResponse.redirect(loginUrl);
+    }
+    try {
+      const payload = await verifyAuthToken(token);
+      if (payload.suspended) {
+        const loginUrl = new URL("/login", req.url);
+        const response = NextResponse.redirect(loginUrl);
+        response.cookies.delete("occ-token");
+        return response;
+      }
+      if (payload.role !== "STUDENT") {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
+      if (payload.onboardingComplete !== false) {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
+      return NextResponse.next();
+    } catch {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("redirect", "/onboarding");
+      return NextResponse.redirect(loginUrl);
+    }
+  }
 
   if (isStaffGate && token) {
     try {
@@ -125,6 +154,14 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL("/header/dashboard", req.url));
       }
 
+      if (
+        role === "STUDENT" &&
+        payload.onboardingComplete === false &&
+        !isOnboardingPath
+      ) {
+        return NextResponse.redirect(new URL("/onboarding", req.url));
+      }
+
       return NextResponse.next();
     } catch {
       if (isStaffPanel) {
@@ -176,6 +213,8 @@ export const config = {
   matcher: [
     "/login",
     "/register",
+    "/onboarding",
+    "/onboarding/:path*",
     "/club-header/:path*",
     "/dashboard/:path*",
     "/clubs/:path*",

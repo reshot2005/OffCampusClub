@@ -8,6 +8,8 @@ export type AuthTokenPayload = {
   role?: "ADMIN" | "CLUB_HEADER" | "STUDENT";
   approvalStatus?: "PENDING" | "APPROVED" | "REJECTED";
   suspended?: boolean;
+  /** false = must complete /onboarding (e.g. first Google sign-in). Omitted on legacy tokens = treat as done. */
+  onboardingComplete?: boolean;
 };
 
 function getJwtSecret() {

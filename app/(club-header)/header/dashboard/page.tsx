@@ -12,6 +12,7 @@ export default async function HeaderDashboardPage() {
 
   return (
     <HeaderOverviewClient
+      headerId={user.id}
       membersCount={membersCount}
       postsCount={postsCount}
       clubName={user.clubManaged?.name ?? "Your Club"}

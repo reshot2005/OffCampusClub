@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ClubHeaderReferralRealtime } from "@/components/club-header/ClubHeaderReferralRealtime";
 import { MembersTable } from "@/components/club-header/MembersTable";
 
 export default async function HeaderMembersPage() {
@@ -11,6 +12,7 @@ export default async function HeaderMembersPage() {
   });
 
   return (
+    <ClubHeaderReferralRealtime headerId={user.id}>
     <div className="space-y-6">
       <div>
         <p className="text-[10px] uppercase tracking-widest text-[#8C6DFD] font-semibold mb-2">Your Referrals</p>
@@ -21,5 +23,6 @@ export default async function HeaderMembersPage() {
       </div>
       <MembersTable members={members as never} />
     </div>
+    </ClubHeaderReferralRealtime>
   );
 }

@@ -7,6 +7,10 @@ const GOOGLE_USERINFO = "https://www.googleapis.com/oauth2/v2/userinfo";
 
 export const GOOGLE_OAUTH_STATE_COOKIE = "occ-google-oauth-state";
 export const GOOGLE_OAUTH_REDIRECT_COOKIE = "occ-google-oauth-redirect";
+/** Uppercase referral code for Google sign-up from /register (short-lived). */
+export const GOOGLE_OAUTH_REFERRAL_COOKIE = "occ-google-oauth-referral";
+/** `"register"` when OAuth started from the register page (for error redirect). */
+export const GOOGLE_OAUTH_FROM_COOKIE = "occ-google-oauth-from";
 
 /** Public callback URL — must match an Authorized redirect URI in Google Cloud Console. */
 export function oauthCallbackUrl(req: NextRequest): string {

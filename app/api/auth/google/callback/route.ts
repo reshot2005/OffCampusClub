@@ -5,10 +5,13 @@ import { DEFAULT_AVATAR_URL } from "@/lib/avatar";
 import {
   exchangeCodeForTokens,
   fetchGoogleUserInfo,
+  GOOGLE_OAUTH_FROM_COOKIE,
   GOOGLE_OAUTH_REDIRECT_COOKIE,
+  GOOGLE_OAUTH_REFERRAL_COOKIE,
   GOOGLE_OAUTH_STATE_COOKIE,
   oauthCallbackUrl,
 } from "@/lib/google-oauth";
+import { attachStudentToReferralCode } from "@/lib/attach-referral";
 import { authCookieOptions, signAuthToken } from "@/lib/jwt";
 import { prisma } from "@/lib/prisma";
 import { STAFF_PUBLIC_PREFIX } from "@/lib/staff-paths";
@@ -27,12 +30,12 @@ function postLoginDestination(
   const safe =
     raw.startsWith("/") && !raw.startsWith("//") ? raw.slice(0, 2000) : "/dashboard";
 
-  if (safe !== "/dashboard") {
-    return safe;
-  }
-
   if (user.role === "STUDENT" && user.onboardingComplete === false) {
     return "/onboarding";
+  }
+
+  if (safe !== "/dashboard") {
+    return safe;
   }
   if (user.role === "ADMIN") {
     return STAFF_PUBLIC_PREFIX;
@@ -55,8 +58,18 @@ export async function GET(req: NextRequest) {
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
 
-  const failRedirect = (message: string) =>
-    NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(message)}`, req.url));
+  const oauthFrom = req.cookies.get(GOOGLE_OAUTH_FROM_COOKIE)?.value;
+  const authErrorBase = oauthFrom === "register" ? "/register" : "/login";
+  const failRedirect = (message: string) => {
+    const res = NextResponse.redirect(
+      new URL(`${authErrorBase}?error=${encodeURIComponent(message)}`, req.url),
+    );
+    res.cookies.delete(GOOGLE_OAUTH_STATE_COOKIE);
+    res.cookies.delete(GOOGLE_OAUTH_REDIRECT_COOKIE);
+    res.cookies.delete(GOOGLE_OAUTH_REFERRAL_COOKIE);
+    res.cookies.delete(GOOGLE_OAUTH_FROM_COOKIE);
+    return res;
+  };
 
   if (oauthError) {
     return failRedirect("Google sign-in was cancelled or failed");
@@ -109,7 +122,10 @@ export async function GET(req: NextRequest) {
     where: { email },
   });
 
+  let createdViaGoogle = false;
+
   if (!user) {
+    createdViaGoogle = true;
     let phoneNumber = "";
     for (let i = 0; i < 10; i++) {
       const candidate = generateIndianPhoneNumber();
@@ -169,16 +185,37 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  const referralCookie = req.cookies.get(GOOGLE_OAUTH_REFERRAL_COOKIE)?.value?.trim() ?? "";
+
+  if (createdViaGoogle && referralCookie.length >= 3) {
+    const attached = await attachStudentToReferralCode({
+      studentId: user.id,
+      studentFullName: user.fullName,
+      studentCollegeName: user.collegeName,
+      codeRaw: referralCookie,
+    });
+    if (attached.ok) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          onboardingComplete: true,
+          referralSource: "Google registration",
+        },
+      });
+    }
+  }
+
   const token = await signAuthToken({
     userId: user.id,
     email: user.email,
     role: user.role as "ADMIN" | "CLUB_HEADER" | "STUDENT",
     approvalStatus: user.approvalStatus as "PENDING" | "APPROVED" | "REJECTED",
     suspended: user.suspended,
+    onboardingComplete: user.onboardingComplete,
   });
 
   const destination = postLoginDestination(
-    { role: user.role, approvalStatus: user.approvalStatus, onboardingComplete: "onboardingComplete" in user ? (user as any).onboardingComplete : false },
+    { role: user.role, approvalStatus: user.approvalStatus, onboardingComplete: user.onboardingComplete },
     redirectCookie,
   );
 
@@ -186,5 +223,7 @@ export async function GET(req: NextRequest) {
   res.cookies.set("occ-token", token, authCookieOptions);
   res.cookies.delete(GOOGLE_OAUTH_STATE_COOKIE);
   res.cookies.delete(GOOGLE_OAUTH_REDIRECT_COOKIE);
+  res.cookies.delete(GOOGLE_OAUTH_REFERRAL_COOKIE);
+  res.cookies.delete(GOOGLE_OAUTH_FROM_COOKIE);
   return res;
 }

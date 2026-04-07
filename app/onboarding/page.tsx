@@ -11,6 +11,8 @@ const REFERRAL_SOURCES = [
   { id: "LinkedIn", icon: MessageCircle },
   { id: "From a friend", icon: Users },
   { id: "Official college event", icon: GraduationCap },
+  { id: "Google search", icon: Globe },
+  { id: "Other", icon: Users },
 ];
 
 export default function OnboardingPage() {
@@ -41,7 +43,7 @@ export default function OnboardingPage() {
         const res = await fetch("/api/referral/validate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: referralCode }),
+          body: JSON.stringify({ code: referralCode.trim().toUpperCase() }),
         });
         const data = await res.json();
         
@@ -77,7 +79,7 @@ export default function OnboardingPage() {
     try {
       const payload = {
         referralSource,
-        referralCode: skipCode ? "" : referralCode,
+        referralCode: skipCode ? "" : referralCode.trim().toUpperCase(),
       };
 
       const res = await fetch("/api/onboarding/complete", {
@@ -131,7 +133,7 @@ export default function OnboardingPage() {
                   Welcome aboard.
                 </h1>
                 <p className="text-lg text-white/50">
-                  Before we get started, how did you hear about OCC?
+                  How did you reach us? Tell us how you heard about OCC.
                 </p>
               </div>
 
@@ -197,7 +199,7 @@ export default function OnboardingPage() {
                   <input
                     type="text"
                     value={referralCode}
-                    onChange={(e) => setReferralCode(e.target.value)}
+                    onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
                     placeholder="e.g. OCC2024"
                     className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white font-medium text-lg focus:outline-none focus:border-white/30 focus:bg-white/[0.05] transition-all placeholder:text-white/20 uppercase"
                   />
@@ -236,8 +238,12 @@ export default function OnboardingPage() {
 
               <div className="pt-6 flex flex-col space-y-4">
                 <button
+                  type="button"
                   onClick={() => handleComplete(false)}
-                  disabled={loading || !codeValid}
+                  disabled={
+                    loading ||
+                    (referralCode.trim().length > 0 && codeValid !== true)
+                  }
                   className="w-full flex items-center justify-center space-x-2 bg-white text-black py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
@@ -246,8 +252,16 @@ export default function OnboardingPage() {
                         <span>Completing...</span>
                      </>
                   ) : (
-                    <span>Enter Dashboard</span>
+                    <span>{referralCode.trim() ? "Continue with this code" : "Continue without a code"}</span>
                   )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleComplete(true)}
+                  disabled={loading}
+                  className="w-full py-3 text-sm font-medium text-white/50 hover:text-white/80 transition-colors disabled:opacity-30"
+                >
+                  Skip — I don&apos;t have a referral code
                 </button>
               </div>
             </motion.div>

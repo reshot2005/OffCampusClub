@@ -1,7 +1,7 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { Loader2, Mail, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
@@ -10,6 +10,8 @@ import { Interactive3DModel } from "@/app/components/auth/Interactive3DModel";
 
 function RegisterPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const oauthError = searchParams.get("error");
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -24,6 +26,39 @@ function RegisterPageInner() {
   const [success, setSuccess] = useState("");
   const [referralCode, setReferralCode] = useState("");
   const [referralMeta, setReferralMeta] = useState<{ valid: boolean; club?: { name: string }; headerName?: string } | null>(null);
+  const [referralChecking, setReferralChecking] = useState(false);
+
+  useEffect(() => {
+    const trimmed = referralCode.trim();
+    if (!trimmed) {
+      setReferralMeta(null);
+      setReferralChecking(false);
+      return;
+    }
+
+    setReferralChecking(true);
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch("/api/referral/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: trimmed }),
+        });
+        const data = (await res.json()) as { valid?: boolean; club?: { name: string }; headerName?: string };
+        setReferralMeta(
+          data && typeof data.valid === "boolean"
+            ? { valid: data.valid, club: data.club, headerName: data.headerName }
+            : { valid: false },
+        );
+      } catch {
+        setReferralMeta({ valid: false });
+      } finally {
+        setReferralChecking(false);
+      }
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [referralCode]);
 
   const sendVerificationCode = async () => {
     setError("");
@@ -125,22 +160,15 @@ function RegisterPageInner() {
     }
   };
 
-  const validateReferral = async () => {
-    if (!referralCode.trim()) {
-      setReferralMeta(null);
-      return;
-    }
-    const res = await fetch("/api/referral/validate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: referralCode.trim() }),
-    });
-    const data = await res.json().catch(() => null);
-    setReferralMeta(data);
-  };
-
   const handleGoogleSignup = () => {
-    alert("Google OAuth would be integrated here");
+    const params = new URLSearchParams();
+    params.set("redirect", "/dashboard");
+    params.set("from", "register");
+    const code = referralCode.trim().toUpperCase();
+    if (code.length >= 3) {
+      params.set("referral", code);
+    }
+    window.location.assign(`/api/auth/google/start?${params.toString()}`);
   };
 
   return (
@@ -181,6 +209,12 @@ function RegisterPageInner() {
           </h2>
           <p className="text-gray-600">Create your OCC account to get started</p>
         </motion.div>
+
+        {oauthError ? (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            {oauthError}
+          </div>
+        ) : null}
 
         {/* Form */}
         <motion.form
@@ -289,11 +323,13 @@ function RegisterPageInner() {
               placeholder="CLUB REFERRAL CODE"
               value={referralCode}
               onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-              onBlur={validateReferral}
               required
               className={`w-full px-5 py-4 bg-white border-2 rounded-2xl text-sm font-bold text-gray-900 placeholder:text-gray-500 placeholder:uppercase placeholder:font-black placeholder:tracking-widest focus:outline-none focus:border-gray-900 focus:ring-4 transition-all ${referralMeta?.valid ? "border-emerald-500 focus:ring-emerald-500/5 focus:border-emerald-500" : "border-gray-400 focus:ring-gray-900/5"
                 }`}
             />
+            {referralChecking && referralCode.trim().length >= 3 ? (
+              <p className="mt-1 text-xs text-gray-400 ml-1">Checking code…</p>
+            ) : null}
             <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Ask your Club Leader for their code</p>
             {referralMeta?.valid ? (
               <div className="mt-3 flex items-start gap-2.5 rounded-2xl bg-emerald-50 p-4 border border-emerald-100">

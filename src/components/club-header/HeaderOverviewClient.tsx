@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -12,9 +13,11 @@ import {
   ArrowRight,
   Copy,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { pusherClient } from "@/lib/pusher";
 
 interface Props {
+  headerId: string;
   membersCount: number;
   postsCount: number;
   clubName: string;
@@ -23,13 +26,30 @@ interface Props {
 }
 
 export function HeaderOverviewClient({
+  headerId,
   membersCount,
   postsCount,
   clubName,
   referralCode,
   hasClub,
 }: Props) {
+  const router = useRouter();
   const [codeCopied, setCodeCopied] = useState(false);
+
+  useEffect(() => {
+    const client = pusherClient;
+    if (!client || !headerId) return;
+    const channelName = `header-${headerId}`;
+    const channel = client.subscribe(channelName);
+    const onNewMember = () => {
+      router.refresh();
+    };
+    channel.bind("new-member", onNewMember);
+    return () => {
+      channel.unbind("new-member", onNewMember);
+      client.unsubscribe(channelName);
+    };
+  }, [headerId, router]);
 
   const stats = [
     { label: "Members via code", value: membersCount, href: "/header/members", icon: Users, highlight: membersCount > 0 },

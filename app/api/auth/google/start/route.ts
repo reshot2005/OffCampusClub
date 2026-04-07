@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   buildGoogleAuthUrl,
   generateOAuthState,
+  GOOGLE_OAUTH_FROM_COOKIE,
   GOOGLE_OAUTH_REDIRECT_COOKIE,
+  GOOGLE_OAUTH_REFERRAL_COOKIE,
   GOOGLE_OAUTH_STATE_COOKIE,
   oauthCallbackUrl,
 } from "@/lib/google-oauth";
@@ -21,6 +23,9 @@ export async function GET(req: NextRequest) {
   }
 
   const redirectAfter = safeRedirectPath(req.nextUrl.searchParams.get("redirect"));
+  const rawReferral = req.nextUrl.searchParams.get("referral")?.trim() ?? "";
+  const normalizedReferral = rawReferral ? rawReferral.toUpperCase().slice(0, 48) : "";
+  const fromPage = req.nextUrl.searchParams.get("from")?.trim() === "register" ? "register" : "";
   const state = generateOAuthState();
   const redirectUri = oauthCallbackUrl(req);
   const url = buildGoogleAuthUrl({ clientId, redirectUri, state });
@@ -35,5 +40,15 @@ export async function GET(req: NextRequest) {
   };
   res.cookies.set(GOOGLE_OAUTH_STATE_COOKIE, state, cookieBase);
   res.cookies.set(GOOGLE_OAUTH_REDIRECT_COOKIE, redirectAfter, cookieBase);
+  if (normalizedReferral.length >= 3) {
+    res.cookies.set(GOOGLE_OAUTH_REFERRAL_COOKIE, normalizedReferral, cookieBase);
+  } else {
+    res.cookies.delete(GOOGLE_OAUTH_REFERRAL_COOKIE);
+  }
+  if (fromPage) {
+    res.cookies.set(GOOGLE_OAUTH_FROM_COOKIE, fromPage, cookieBase);
+  } else {
+    res.cookies.delete(GOOGLE_OAUTH_FROM_COOKIE);
+  }
   return res;
 }

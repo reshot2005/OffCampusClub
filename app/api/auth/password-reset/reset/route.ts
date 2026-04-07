@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
       role: user.role as "ADMIN" | "CLUB_HEADER" | "STUDENT",
       approvalStatus: user.approvalStatus as "PENDING" | "APPROVED" | "REJECTED",
       suspended: user.suspended,
+      onboardingComplete: user.onboardingComplete,
     });
     const response = NextResponse.json({ success: true }, { status: 200 });
     response.cookies.set("occ-token", token, authCookieOptions);

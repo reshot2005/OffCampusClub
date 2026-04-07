@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validations";
 import { authCookieOptions, signAuthToken } from "@/lib/jwt";
 import { sha256Hex } from "@/lib/otp";
-import { pusherServer } from "@/lib/pusher";
+import { attachStudentToReferralCode } from "@/lib/attach-referral";
 
 
 export async function POST(req: NextRequest) {
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       body !== null &&
       "referralCode" in body &&
       typeof (body as { referralCode?: unknown }).referralCode === "string"
-        ? (body as { referralCode: string }).referralCode.trim()
+        ? (body as { referralCode: string }).referralCode.trim().toUpperCase()
         : "";
 
     if (!referralCode) {
@@ -87,14 +87,6 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(validated.password, 12);
 
-    let referrerUser: { id: string; clubManaged: { id: string } | null } | null = null;
-    if (referralCode) {
-      referrerUser = await prisma.user.findUnique({
-        where: { referralCode },
-        select: { id: true, clubManaged: { select: { id: true } } },
-      });
-    }
-
     const user = await prisma.user.create({
       data: {
         fullName: validated.fullName,
@@ -103,7 +95,8 @@ export async function POST(req: NextRequest) {
         email: validated.email,
         password: hashedPassword,
         role: "STUDENT",
-        referredBy: referrerUser?.id,
+        onboardingComplete: true,
+        referralSource: "Email registration",
       },
       select: {
         id: true,
@@ -118,43 +111,13 @@ export async function POST(req: NextRequest) {
       data: { usedAt: new Date() },
     });
 
-    if (referrerUser?.clubManaged?.id) {
-      try {
-        await prisma.clubMembership.upsert({
-          where: { userId_clubId: { userId: user.id, clubId: referrerUser.clubManaged.id } },
-          update: {},
-          create: { userId: user.id, clubId: referrerUser.clubManaged.id },
-        });
-
-        await prisma.referralStat.create({
-          data: {
-            clubHeaderId: referrerUser.id,
-            studentId: user.id,
-            clubId: referrerUser.clubManaged.id,
-          },
-        });
-
-        await prisma.notification.create({
-          data: {
-            userId: referrerUser.id,
-            type: "new-referral",
-            title: "New student joined",
-            message: `${user.fullName} joined using your referral code.`,
-            data: { studentId: user.id },
-          },
-        });
-
-        await pusherServer.trigger(`header-${referrerUser.id}`, "new-member", {
-          member: {
-            id: user.id,
-            fullName: user.fullName,
-            collegeName: user.collegeName,
-            registeredAt: new Date().toISOString(),
-          },
-        });
-      } catch (referralErr) {
-        console.warn("[auth/register] referral/Pusher side-effects failed (non-critical):", referralErr);
-      }
+    if (referralCode) {
+      await attachStudentToReferralCode({
+        studentId: user.id,
+        studentFullName: user.fullName,
+        studentCollegeName: user.collegeName,
+        codeRaw: referralCode,
+      });
     }
 
     const token = await signAuthToken({
@@ -163,6 +126,7 @@ export async function POST(req: NextRequest) {
       role: "STUDENT",
       approvalStatus: "APPROVED",
       suspended: false,
+      onboardingComplete: true,
     });
     const response = NextResponse.json({ success: true, user }, { status: 201 });
     response.cookies.set("occ-token", token, authCookieOptions);

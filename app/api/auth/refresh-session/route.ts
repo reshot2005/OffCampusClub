@@ -21,6 +21,7 @@ export async function POST() {
     role: user.role as "ADMIN" | "CLUB_HEADER" | "STUDENT",
     approvalStatus: user.approvalStatus as "PENDING" | "APPROVED" | "REJECTED",
     suspended: user.suspended,
+    onboardingComplete: user.onboardingComplete,
   });
 
   const res = NextResponse.json({

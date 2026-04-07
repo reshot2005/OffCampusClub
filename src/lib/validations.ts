@@ -170,7 +170,8 @@ export const clubHeaderRegisterSchema = z
   });
 
 export const referralValidateSchema = z.object({
-  code: z.string().min(4),
+  /** Must match club-header custom codes (min 3 on PATCH). */
+  code: z.string().min(3),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

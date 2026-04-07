@@ -56,6 +56,8 @@ export async function PATCH(_req: NextRequest, { params }: { params: { id: strin
         approvalStatus: "APPROVED",
         referralCode: code,
         pendingLeadClubId: null,
+        /** Keeps `clubManagedId` in sync with `Club.headerId` for APIs that read this field. */
+        clubManagedId: club.id,
       },
     });
   });
