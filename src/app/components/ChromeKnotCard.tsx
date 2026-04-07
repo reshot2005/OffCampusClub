@@ -68,8 +68,8 @@ export function ChromeKnotCard() {
           transition={{ type: 'spring', stiffness: 80, damping: 75 }}
         >
           <img
-            src="/events/fashion-event.png"
-            alt="OCC club event highlight"
+            src="/occ-showcase.png"
+            alt="OCC community moment"
             className="h-full w-full object-cover rounded-[20px]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-black/20" />
