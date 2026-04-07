@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Search, Shield, Ban, Key, Trash2, ChevronDown, UserCheck, UserX } from "lucide-react";
+import { pusherClient } from "@/lib/pusher";
 
 type User = {
   id: string; fullName: string; email: string; phoneNumber: string; collegeName: string;
@@ -18,6 +19,20 @@ export function UsersCRUD({ users: initial }: { users: User[] }) {
   const [q, setQ] = useState("");
   const [roleF, setRoleF] = useState("");
   const [statusF, setStatusF] = useState("");
+
+  useEffect(() => {
+    setUsers(initial);
+  }, [initial]);
+
+  useEffect(() => {
+    const channel = pusherClient?.subscribe("system-updates");
+    const onUpdate = () => { router.refresh(); };
+    channel?.bind("user-updated", onUpdate);
+    return () => {
+      channel?.unbind("user-updated", onUpdate);
+      pusherClient?.unsubscribe("system-updates");
+    };
+  }, [router]);
 
   const filtered = useMemo(() => {
     return users.filter((u) => {
@@ -117,7 +132,8 @@ export function UsersCRUD({ users: initial }: { users: User[] }) {
                 <td className="px-4 py-3">
                   <p className="font-semibold text-white text-[13px]">{u.fullName}</p>
                   <p className="text-[11px] text-white/40 font-mono">{u.email}</p>
-                  <p className="text-[10px] text-white/25">{u.collegeName}</p>
+                  <p className="text-[10px] text-white/30 font-mono">{u.phoneNumber}</p>
+                  <p className="text-[10px] text-white/25 mt-0.5">{u.collegeName}</p>
                 </td>
                 <td className="px-4 py-3">
                   <select value={u.role} onChange={(e) => changeRole(u, e.target.value)}

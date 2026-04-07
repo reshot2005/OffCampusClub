@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { pusherServer } from "@/lib/pusher";
 import { profileUpdateSchema } from "@/lib/validations";
 
 export async function GET() {
@@ -58,6 +59,12 @@ export async function PATCH(req: NextRequest) {
         },
       },
     });
+
+    // Trigger realtime updates for Admin arrays and Club Header referrals
+    await pusherServer.trigger("system-updates", "user-updated", { userId: user.id });
+    if (user.referredBy) {
+      await pusherServer.trigger(`header-${user.referredBy}`, "new-member", { userId: user.id }); // reuse 'new-member' event to trigger router.refresh() on header
+    }
 
     return NextResponse.json({ success: true, user: updated });
   } catch (error) {

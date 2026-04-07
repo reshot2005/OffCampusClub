@@ -40,6 +40,7 @@ export default async function AdminUsersPage({
     role: u.role,
     approvalStatus: u.approvalStatus,
     collegeName: u.collegeName,
+    phoneNumber: u.phoneNumber,
     suspended: u.suspended,
     createdAt: u.createdAt.toISOString(),
     referralCode: u.referralCode,

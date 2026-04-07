@@ -112,7 +112,7 @@ export function ProfileForm({ initialValues }: { initialValues: ProfileFormIniti
         <div className="flex flex-col gap-2">
           <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#5227FF]">Profile photo</p>
           <p className="text-xs text-black/45 max-w-sm">
-            JPG, PNG, WebP or GIF — max 8MB. If an upload fails, wait a moment and try again.
+
           </p>
           <div className="flex flex-wrap gap-2">
             <button

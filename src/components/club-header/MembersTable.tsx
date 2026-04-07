@@ -7,6 +7,8 @@ type Member = {
   id: string;
   student: {
     fullName: string;
+    email: string;
+    phoneNumber: string;
     collegeName: string;
     bio: string | null;
     city: string | null;
@@ -50,10 +52,14 @@ export function MembersTable({ members }: { members: Member[] }) {
               </td>
               <td className="px-6 py-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#12183A] to-[#0A0D20] border border-white/10 text-xs font-bold text-white">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#12183A] to-[#0A0D20] border border-white/10 text-xs font-bold text-white">
                     {m.student.fullName.charAt(0)}
                   </div>
-                  <span className="font-medium text-white/90">{m.student.fullName}</span>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-white/90">{m.student.fullName}</span>
+                    <span className="text-[10px] text-white/40 font-mono mt-0.5">{m.student.email}</span>
+                    <span className="text-[10px] text-white/30 font-mono">{m.student.phoneNumber}</span>
+                  </div>
                 </div>
               </td>
               <td className="px-6 py-4">
