@@ -23,27 +23,9 @@ export async function POST(req: NextRequest) {
 
     const existing = await prisma.user.findFirst({
       where: { OR: [{ email: payload.email }, { phoneNumber: payload.phoneNumber }] },
-      select: { id: true, role: true, approvalStatus: true },
+      select: { id: true },
     });
     if (existing) {
-      if (existing.role === "CLUB_HEADER" && existing.approvalStatus === "PENDING") {
-        return NextResponse.json(
-          {
-            error:
-              "Application already submitted! Please wait for admin approval, then login at /login.",
-          },
-          { status: 409 }
-        );
-      }
-      if (existing.role === "CLUB_HEADER" && existing.approvalStatus === "APPROVED") {
-        return NextResponse.json(
-          {
-            error:
-              "Your application is already approved! Please login at /login to access your dashboard.",
-          },
-          { status: 409 }
-        );
-      }
       return NextResponse.json(
         { error: "An account with this email or phone already exists. Try logging in instead." },
         { status: 409 }
@@ -102,10 +84,8 @@ export async function POST(req: NextRequest) {
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
-        const fields = error.meta?.target;
-        const hint = Array.isArray(fields) ? fields.join(", ") : "email or phone";
         return NextResponse.json(
-          { error: `An account with this ${hint} already exists. Try logging in instead.` },
+          { error: "An account with this email or phone already exists. Try logging in instead." },
           { status: 409 }
         );
       }

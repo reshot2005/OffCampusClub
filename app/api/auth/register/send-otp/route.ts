@@ -69,15 +69,7 @@ export async function POST(req: NextRequest) {
       );
     }
     console.error("[register/send-otp]", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "OTP send failed",
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "OTP send failed" }, { status: 500 });
   }
 }
 

@@ -150,20 +150,13 @@ export async function POST(req: NextRequest) {
       }
       if (error.code === "P2003") {
         return NextResponse.json(
-          { error: "Foreign key constraint failed. Related record not found." },
+          { error: "Invalid request data" },
           { status: 400 },
         );
       }
-      return NextResponse.json(
-        { error: `Database error (${error.code}): ${error.message}` },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: "Registration failed" }, { status: 500 });
     }
 
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json(
-      { error: `Registration failed: ${message}. Check server logs.` },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Registration failed" }, { status: 500 });
   }
 }

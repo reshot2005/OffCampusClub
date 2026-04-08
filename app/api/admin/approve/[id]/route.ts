@@ -3,14 +3,28 @@ import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { prisma } from "@/lib/prisma";
 import { generateReferralCode } from "@/lib/referral";
 import { pusherServer } from "@/lib/pusher";
+import { checkAdminMutationRateLimit } from "@/lib/admin-rate-limit";
 
 export async function PATCH(_req: NextRequest, { params }: { params: { id: string } }) {
   const admin = await requireAdminPermission("approvals", "approve");
   if (admin instanceof NextResponse) return admin;
+  const rl = checkAdminMutationRateLimit({ req: _req, adminId: admin.id, action: "approve-header", limit: 20 });
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please retry shortly." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+    );
+  }
 
   const target = await prisma.user.findUnique({
     where: { id: params.id },
-    include: { clubManaged: true },
+    select: {
+      id: true,
+      fullName: true,
+      role: true,
+      approvalStatus: true,
+      pendingLeadClubId: true,
+    },
   });
   if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 });
   if (target.role !== "CLUB_HEADER" || target.approvalStatus !== "PENDING") {

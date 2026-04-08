@@ -25,7 +25,17 @@ export async function GET(req: NextRequest) {
       ...(role ? { role } : {}),
       ...(status ? { approvalStatus: status } : {}),
     },
-    include: {
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      phoneNumber: true,
+      collegeName: true,
+      role: true,
+      approvalStatus: true,
+      suspended: true,
+      referralCode: true,
+      createdAt: true,
       memberships: { include: { club: true }, take: 5 },
       _count: { select: { referralStatsAsStudent: true, referralStatsAsHeader: true } },
     },

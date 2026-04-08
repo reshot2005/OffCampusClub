@@ -31,7 +31,45 @@ export async function POST(req: NextRequest) {
       content: parsed.content,
       type: parsed.type || "post",
     },
-    include: { user: true, club: true },
+    select: {
+      id: true,
+      userId: true,
+      clubId: true,
+      imageUrl: true,
+      imageUrls: true,
+      caption: true,
+      content: true,
+      likes: true,
+      likesCount: true,
+      sharesCount: true,
+      type: true,
+      hidden: true,
+      createdAt: true,
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          avatar: true,
+          role: true,
+          approvalStatus: true,
+          suspended: true,
+          createdAt: true,
+        },
+      },
+      club: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          icon: true,
+          description: true,
+          theme: true,
+          coverImage: true,
+          memberCount: true,
+          createdAt: true,
+        },
+      },
+    },
   });
 
   await pusherServer.trigger(`club-${clubId}`, "new-post", { post });

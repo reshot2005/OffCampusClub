@@ -21,6 +21,9 @@ export async function PATCH(req: NextRequest) {
   if (!user || user.role !== "CLUB_HEADER") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (user.approvalStatus !== "APPROVED") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const { newCode } = await req.json();

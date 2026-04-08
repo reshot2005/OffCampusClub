@@ -5,6 +5,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { logSuspiciousAccess } from "@/lib/security";
+import { checkAdminMutationRateLimit } from "@/lib/admin-rate-limit";
 
 const patchSchema = z.object({
   suspended: z.boolean().optional(),
@@ -18,10 +19,17 @@ const patchSchema = z.object({
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const base = await requireAdminPermission("users", "update");
   if (base instanceof NextResponse) return base;
+  const rl = checkAdminMutationRateLimit({ req, adminId: base.id, action: "admin-cp-user-patch", limit: 40 });
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please retry shortly." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+    );
+  }
 
   const body = patchSchema.parse(await req.json());
   const data: Record<string, unknown> = {};
-  let tempPassword: string | null = null;
+  let passwordResetRequested = false;
 
   if (params.id === base.id && body.suspended) {
     return NextResponse.json({ error: "Cannot suspend yourself" }, { status: 400 });
@@ -73,8 +81,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (body.approvalStatus !== undefined) data.approvalStatus = body.approvalStatus;
 
   if (body.resetPassword) {
-    tempPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 4).toUpperCase();
+    const tempPassword =
+      Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 4).toUpperCase();
     data.password = await bcrypt.hash(tempPassword, 12);
+    passwordResetRequested = true;
   }
 
   if (Object.keys(data).length === 0) {
@@ -106,12 +116,24 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     details: { ...data, password: body.resetPassword ? "[REDACTED]" : undefined },
   });
 
-  return NextResponse.json({ success: true, tempPassword });
+  return NextResponse.json({
+    success: true,
+    passwordResetRequested,
+    // Never return raw temporary credentials in API responses.
+    tempPassword: null,
+  });
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const admin = await requireAdminPermission("users", "delete");
   if (admin instanceof NextResponse) return admin;
+  const rl = checkAdminMutationRateLimit({ req, adminId: admin.id, action: "admin-cp-user-delete", limit: 20 });
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please retry shortly." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+    );
+  }
 
   if (params.id === admin.id) {
     return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 });

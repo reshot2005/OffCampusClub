@@ -2,10 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
+import { checkAdminMutationRateLimit } from "@/lib/admin-rate-limit";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const admin = await requireAdminPermission("approvals", "reject");
   if (admin instanceof NextResponse) return admin;
+  const rl = checkAdminMutationRateLimit({ req, adminId: admin.id, action: "reject-header", limit: 20 });
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please retry shortly." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+    );
+  }
 
   const body = await req.json().catch(() => ({}));
   const reason = typeof body.reason === "string" && body.reason ? body.reason : "Application not selected.";
