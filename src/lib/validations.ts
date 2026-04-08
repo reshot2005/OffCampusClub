@@ -91,7 +91,7 @@ export const eventRegistrationSchema = z.object({
 
 export const gigApplicationSchema = z.object({
   gigId: z.string().cuid(),
-  message: z.string().max(50).optional().or(z.literal("")),
+  message: z.string().max(2000).optional().or(z.literal("")),
   applicantName: z.string().min(2).max(120).optional(),
   applicantPhone: z.string().min(10).max(20).optional(),
   applicantEmail: z.string().email().max(200).optional(),

@@ -74,12 +74,6 @@ export function Header({
 
   const joinDotClass = overDark ? "bg-white/80" : "bg-white/90";
 
-  const clubsBtnClass = overDark
-    ? "bg-white/15 px-5 py-2.5 text-xs font-semibold tracking-wider !text-white backdrop-blur-md ring-1 ring-white/20 transition-colors hover:bg-white/25"
-    : "bg-slate-200/50 px-5 py-2.5 text-xs font-semibold tracking-wider !text-slate-900 backdrop-blur-md transition-colors hover:bg-slate-200";
-
-  const clubsDotClass = overDark ? "bg-white/75" : "bg-slate-900/70";
-
   const goToWhatIsOcc = () => {
     const target = document.getElementById("what-is-occ");
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -105,7 +99,7 @@ export function Header({
           <img
             src="/favicon.png"
             alt="OCC"
-            className="h-[36px] w-auto sm:h-[40px]"
+            className="h-[48px] w-auto sm:h-[52px]"
           />
         </button>
       </MovableBlock>
@@ -121,11 +115,7 @@ export function Header({
           <button
             type="button"
             onClick={onToggleTheme}
-            className={`flex h-9 min-w-[68px] items-center justify-center gap-1 rounded-full px-2 text-[10px] font-bold tracking-wider ${
-              overDark
-                ? "bg-white/15 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-white/25"
-                : "bg-slate-200/60 text-slate-800 backdrop-blur-md hover:bg-slate-200"
-            }`}
+            className={`flex items-center justify-center gap-1.5 rounded-full ${joinClubLinkClass} text-[10px] font-bold sm:text-xs`}
             aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
           >
             {theme === "dark" ? <Moon size={12} /> : <Sun size={12} />}
@@ -156,11 +146,15 @@ export function Header({
           </Link>
         </MovableBlock>
         <MovableBlock id="header-clubs-btn" className="hidden sm:flex">
-          <button type="button" onClick={() => scrollToOccClubsSection()} className={`flex items-center justify-center rounded-full ${clubsBtnClass}`}>
+          <button
+            type="button"
+            onClick={() => scrollToOccClubsSection()}
+            className={`flex items-center justify-center rounded-full ${joinClubLinkClass}`}
+          >
             CLUBS{" "}
             <span className="ml-2 flex gap-[2px]">
-              <span className={`h-1 w-1 rounded-full ${clubsDotClass}`} />
-              <span className={`h-1 w-1 rounded-full ${clubsDotClass}`} />
+              <span className={`h-1 w-1 rounded-full ${joinDotClass}`} />
+              <span className={`h-1 w-1 rounded-full ${joinDotClass}`} />
             </span>
           </button>
         </MovableBlock>

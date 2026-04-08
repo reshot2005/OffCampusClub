@@ -67,12 +67,12 @@ export function ShowcaseCards() {
         <MovableBlock id="showcase-tip" className="mt-12 flex justify-center md:mt-16">
           <div className="inline-block max-w-lg rounded-lg border border-white/10 bg-white/5 px-5 py-3 text-center text-sm text-white/70 backdrop-blur-sm md:px-6">
             <MovableBlock id="showcase-tip-label" className="inline-block align-baseline">
-              <span className="font-semibold text-white">Try it:</span>
+              <span className="font-semibold text-white">On OCC:</span>
             </MovableBlock>{" "}
             <MovableBlock id="showcase-tip-copy" className="inline-block max-w-[min(100%,18rem)] align-baseline text-left sm:max-w-none sm:text-center">
               <span>
-                Move your cursor over the cards—same playful depth we want for club drops and event
-                teasers on OCC.
+                Motion like this is the direction for club pages, gig cards, and event posts—so
+                what you scroll matches the energy of real meetups, turf nights, and campus scenes.
               </span>
             </MovableBlock>
           </div>

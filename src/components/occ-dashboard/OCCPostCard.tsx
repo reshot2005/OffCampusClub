@@ -31,6 +31,19 @@ export type OCCPost = {
   commentsCount?: number;
 };
 
+type PostComment = {
+  id: string;
+  content: string;
+  createdAt: string | Date;
+  user: {
+    id?: string;
+    fullName?: string;
+    avatar?: string | null;
+    email?: string | null;
+    phoneNumber?: string | null;
+  };
+};
+
 /** Instagram-style: always clamp to 5 lines until expanded (works at any viewport width). */
 function PostCaptionBody({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
@@ -77,11 +90,17 @@ function PostCaptionBody({ text }: { text: string }) {
   );
 }
 
-export function OCCPostCard({ post }: { post: OCCPost }) {
+export function OCCPostCard({
+  post,
+  currentUserId,
+}: {
+  post: OCCPost;
+  currentUserId?: string;
+}) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likeCount);
-  const [sharesCount, setSharesCount] = useState(post.sharesCount || 0);
   const [saved, setSaved] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   
   const [isLoaded, setIsLoaded] = useState(false);
   /** True only if both the post URL and premium fallback failed to load. */
@@ -96,7 +115,8 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
 
   // Comments state
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<PostComment[]>([]);
+  const [commentsCount, setCommentsCount] = useState(post.commentsCount ?? 0);
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -110,7 +130,13 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
     setIsLoaded(false);
   }, [post.id, post.imageUrl]);
 
-  // REALTIME - Listening for likes, shares, AND comments
+  useEffect(() => {
+    setCommentsCount(post.commentsCount ?? 0);
+    setComments([]);
+    setIsCommentsOpen(false);
+  }, [post.id, post.commentsCount]);
+
+  // REALTIME - Listening for likes and comments
   useEffect(() => {
     if (!pusherClient || !post.clubId) return;
 
@@ -120,13 +146,24 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
         if (data.postId === post.id) setLikeCount(data.likesCount);
       });
 
-      channel.bind("new-share", (data: { postId: string; sharesCount: number }) => {
-        if (data.postId === post.id) setSharesCount(data.sharesCount);
+      channel.bind("new-comment", (data: { postId: string; comment: PostComment; commentsCount?: number }) => {
+        if (data.postId === post.id) {
+          setComments((prev) => {
+            if (prev.some((c) => c.id === data.comment.id)) return prev;
+            return [...prev, data.comment];
+          });
+          setCommentsCount((prev) =>
+            typeof data.commentsCount === "number" ? data.commentsCount : prev + 1,
+          );
+        }
       });
 
-      channel.bind("new-comment", (data: { postId: string; comment: any }) => {
+      channel.bind("comment-deleted", (data: { postId: string; commentId: string; commentsCount?: number }) => {
         if (data.postId === post.id) {
-          setComments(prev => [...prev, data.comment]);
+          setComments((prev) => prev.filter((c) => c.id !== data.commentId));
+          setCommentsCount((prev) =>
+            typeof data.commentsCount === "number" ? data.commentsCount : Math.max(0, prev - 1),
+          );
         }
       });
     }
@@ -168,19 +205,25 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
   };
 
   const handleShare = async () => {
-    setSharesCount(prev => prev + 1);
+    const shareUrl = `${window.location.origin}/p/${post.id}`;
     try {
-      const res = await fetch(`/api/posts/${post.id}/share`, { method: "POST" });
-      const data = await res.json();
-      if (data.sharesCount !== undefined) setSharesCount(data.sharesCount);
-    } catch (e) {}
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 1800);
+    } catch (e) {
+      // Fallback for browsers/contexts where clipboard API is blocked.
+      window.open(shareUrl, "_blank", "noopener,noreferrer");
+    }
   };
 
   const fetchComments = async () => {
     try {
       const res = await fetch(`/api/posts/${post.id}/comment`);
       const data = await res.json();
-      if (Array.isArray(data)) setComments(data);
+      if (Array.isArray(data)) {
+        setComments(data);
+        setCommentsCount(data.length);
+      }
     } catch (e) {
       console.error("Failed to fetch comments");
     }
@@ -198,9 +241,19 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
     try {
       const res = await fetch(`/api/posts/${post.id}/comment`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: commentText.trim() })
       });
       if (res.ok) {
+        const data = await res.json();
+        if (data?.comment) {
+          setComments((prev) => (prev.some((c) => c.id === data.comment.id) ? prev : [...prev, data.comment]));
+        }
+        if (typeof data?.commentsCount === "number") {
+          setCommentsCount(data.commentsCount);
+        } else {
+          setCommentsCount((prev) => prev + 1);
+        }
         setCommentText("");
         if (!isCommentsOpen) setIsCommentsOpen(true);
       }
@@ -217,6 +270,7 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
       const res = await fetch(`/api/comments/${commentId}`, { method: "DELETE" });
       if (res.ok) {
         setComments(prev => prev.filter(c => c.id !== commentId));
+        setCommentsCount((prev) => Math.max(0, prev - 1));
       }
     } catch (e) {}
   };
@@ -349,7 +403,7 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
                   className="space-y-5 sm:space-y-6"
                 >
                   <div className="flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md py-2 z-10">
-                    <h5 className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] text-black/30">Community Intel • {comments.length}</h5>
+                    <h5 className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] text-black/30">Community Intel • {commentsCount}</h5>
                     <button onClick={() => setIsCommentsOpen(false)} className="text-[9px] sm:text-[10px] font-medium text-[#5227FF] uppercase tracking-widest hover:underline p-1">Close x</button>
                   </div>
                   
@@ -367,9 +421,11 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
                               <div className="flex items-center justify-between">
                                 <span className="text-[11px] sm:text-[12px] font-semibold text-black">{comment.user.fullName}</span>
                                 <div className="flex items-center gap-1 opacity-0 group-hover/comment:opacity-100 transition-all">
-                                  <button onClick={() => handleDeleteComment(comment.id)} className="p-1 px-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors">
-                                    <Trash2 className="h-3 w-3" />
-                                  </button>
+                                  {currentUserId && comment.user?.id === currentUserId ? (
+                                    <button onClick={() => handleDeleteComment(comment.id)} className="p-1 px-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors">
+                                      <Trash2 className="h-3 w-3" />
+                                    </button>
+                                  ) : null}
                                   <button onClick={() => handleReportComment(comment.id)} className="p-1 px-1.5 rounded-lg text-black/20 hover:text-black hover:bg-black/5 transition-colors">
                                     <Flag className="h-3 w-3" />
                                   </button>
@@ -420,13 +476,13 @@ export function OCCPostCard({ post }: { post: OCCPost }) {
                   className={`group flex items-center gap-1.5 transition-transform ${isCommentsOpen ? "scale-[1.03]" : ""}`}
                 >
                   <MessageCircle className={`h-[22px] w-[22px] sm:h-6 sm:w-6 transition-all ${isCommentsOpen ? "text-[#5227FF] fill-[#5227FF]/10" : "text-black/25 group-hover:text-[#5227FF]"}`} strokeWidth={2.2} />
-                  <span className="text-[12px] font-semibold text-black/75 font-sans">{comments.length || post.commentsCount || 0}</span>
+                  <span className="text-[12px] font-semibold text-black/75 font-sans">{commentsCount}</span>
                 </button>
               </div>
               <div className="flex items-center gap-1">
                 <button type="button" onClick={handleShare} className="flex items-center gap-1.5 rounded-xl border border-black/[0.06] bg-black/[0.02] p-2 text-black/25 transition hover:text-black/60">
                   <Share2 className="h-4 w-4" />
-                  {sharesCount > 0 && <span className="text-[10px] font-semibold">{sharesCount}</span>}
+                  {shareCopied ? <span className="text-[10px] font-semibold">Copied</span> : null}
                 </button>
                 <button type="button" onClick={() => setSaved(!saved)} className="rounded-xl border border-black/[0.06] bg-black/[0.02] p-2 text-black/25 transition hover:text-black/50">
                   <Bookmark className={`h-4 w-4 ${saved ? "text-black fill-black" : ""}`} />

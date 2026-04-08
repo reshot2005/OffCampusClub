@@ -3,6 +3,7 @@
 import { Calendar, Users, Briefcase, Plus, ChevronRight, MapPin, ExternalLink, BadgeCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { pusherClient } from "@/lib/pusher";
 import { displayClubMembers, formatSocialCount } from "@/lib/socialDisplay";
@@ -209,7 +210,12 @@ export function OCCRightRail({ events, trending, opportunities }: OCCRightRailPr
             </div>
             <h3 className="text-[17px] font-semibold tracking-tight text-black/90">Gigs & Labs</h3>
           </div>
-          <button className="text-[11px] font-semibold text-[#D4AF37] hover:scale-105 transition-transform uppercase tracking-widest">See all</button>
+          <Link
+            href="/gigs"
+            className="text-[11px] font-semibold text-[#D4AF37] hover:scale-105 transition-transform uppercase tracking-widest"
+          >
+            See all
+          </Link>
         </div>
         <div className="flex flex-col gap-4">
           {opportunities.map((opp) => (
@@ -223,14 +229,23 @@ export function OCCRightRail({ events, trending, opportunities }: OCCRightRailPr
                   <h4 className="text-[15px] font-semibold text-black/85 group-hover:text-black tracking-tight">{opp.title}</h4>
                   <span className="text-[12px] font-semibold text-[#D4AF37] tracking-widest uppercase bg-[#D4AF37]/5 px-2.5 py-0.5 rounded-lg border border-[#D4AF37]/10 self-start">{opp.brand}</span>
                 </div>
-                <ExternalLink className="h-4.5 w-4.5 text-black/10 group-hover:text-[#5227FF] transition-colors" />
+                <Link
+                  href={`/gigs/${opp.id}/apply`}
+                  className="rounded-md p-1 text-black/10 transition-colors hover:text-[#5227FF]"
+                  aria-label={`Open ${opp.title} application`}
+                >
+                  <ExternalLink className="h-4.5 w-4.5" />
+                </Link>
               </div>
               <p className="text-[12px] font-medium text-black/30 leading-relaxed line-clamp-2 italic pr-2">
                 "{opp.description}"
               </p>
-              <button className="w-full py-3 bg-white text-black text-[12px] font-semibold rounded-xl border border-black/5 hover:bg-black hover:text-white transition-all shadow-sm">
+              <Link
+                href={`/gigs/${opp.id}/apply`}
+                className="block w-full rounded-xl border border-black/5 bg-white py-3 text-center text-[12px] font-semibold text-black shadow-sm transition-all hover:bg-black hover:text-white"
+              >
                 Apply Now
-              </button>
+              </Link>
             </motion.div>
           ))}
         </div>

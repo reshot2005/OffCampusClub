@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
 import { Loader2, CheckCircle2, XCircle, ArrowRight, MessageCircle, Globe, Users, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { REFERRAL_CODE_MIN_LEN } from "@/lib/validations";
@@ -72,7 +71,7 @@ export default function OnboardingPage() {
         if (data.valid) {
           setCodeValid(true);
           setCodeSuggestion(null);
-          setClubInfo({ name: data.club?.name || "the club", headerName: data.headerName });
+          setClubInfo({ name: data.club?.name || "the club", headerName: data.headerName || "the club leader" });
         } else {
           setCodeValid(false);
           setClubInfo(null);
@@ -153,14 +152,10 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        <AnimatePresence mode="wait">
+        <React.Fragment>
           {step === 1 && (
-            <motion.div
+            <div
               key="step1"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
               className="space-y-8"
             >
               <div>
@@ -205,16 +200,12 @@ export default function OnboardingPage() {
                   {React.createElement(ArrowRight as any, { className: "w-5 h-5" })}
                 </button>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {step === 2 && (
-            <motion.div
+            <div
               key="step2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
               className="space-y-8"
             >
               <div>
@@ -248,25 +239,19 @@ export default function OnboardingPage() {
                   )}
                 </div>
 
-                <AnimatePresence>
+                <React.Fragment>
                   {codeValid === true && clubInfo && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
+                    <div
                       className="flex items-center space-x-2 text-emerald-400 text-sm font-medium bg-emerald-400/10 px-4 py-3 rounded-lg border border-emerald-400/20 overflow-hidden"
                     >
                       {React.createElement(CheckCircle2 as any, { className: "w-4 h-4 shrink-0" })}
                       <span>Valid code! You'll be joining <strong>{clubInfo.name}</strong> alongside {clubInfo.headerName}.</span>
-                    </motion.div>
+                    </div>
                   )}
                   {codeValid === false &&
                     referralCode.trim().length >= REFERRAL_CODE_MIN_LEN &&
                     !codeValidating && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
+                    <div
                       className="space-y-3 text-rose-400 text-sm font-medium bg-rose-400/10 px-4 py-3 rounded-lg border border-rose-400/20 overflow-hidden"
                     >
                       <div className="flex items-start gap-2">
@@ -289,9 +274,9 @@ export default function OnboardingPage() {
                           </button>
                         </div>
                       ) : null}
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
+                </React.Fragment>
               </div>
 
               <div className="pt-6 flex flex-col space-y-4">
@@ -322,9 +307,9 @@ export default function OnboardingPage() {
                   Skip — I don&apos;t have a referral code
                 </button>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </React.Fragment>
       </div>
     </div>
   );

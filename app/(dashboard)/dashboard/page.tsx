@@ -40,7 +40,7 @@ export default async function DashboardPage() {
         ]
       },
       take: 6, 
-      include: { user: true, club: true }, 
+      include: { user: true, club: true, _count: { select: { comments: true } } }, 
       orderBy: { createdAt: "desc" } 
     }),
     prisma.gig.findMany({
@@ -84,7 +84,7 @@ export default async function DashboardPage() {
           sharesCount: p.sharesCount || 0,
           clubId: p.clubId,
           clubName: p.club?.name || "OCC Club",
-          commentsCount: 0,
+          commentsCount: p._count.comments || 0,
         };
       })
     : []);
@@ -121,7 +121,7 @@ export default async function DashboardPage() {
 
         <div className="flex flex-col gap-6">
           {feedPosts.map((p) => (
-            <OCCPostCard key={p.id} post={p} />
+            <OCCPostCard key={p.id} post={p} currentUserId={user.id} />
           ))}
         </div>
       </div>

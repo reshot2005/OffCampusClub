@@ -21,3 +21,5 @@ Your `/login` and `/dashboard` use Prisma + JWT, so Vercel also needs:
 
 - `DATABASE_URL` (Postgres connection string for Prisma)
 - `JWT_SECRET` (random secret for signing `occ-token`)
+
+# OCC_V2_Mine

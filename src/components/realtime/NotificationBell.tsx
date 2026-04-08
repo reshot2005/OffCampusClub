@@ -59,6 +59,32 @@ export function NotificationBell({
     };
   }, [userId]);
 
+  useEffect(() => {
+    if (!pusherClient) return;
+    const client = pusherClient;
+    const adminChannelName = "admin-global";
+    const adminChannel = client.subscribe(adminChannelName);
+    adminChannel.bind(
+      "intel-report",
+      (data: { title?: string; message?: string; createdAt?: string }) => {
+        setItems((prev) => [
+          {
+            id: crypto.randomUUID(),
+            title: data.title || "Intel report",
+            message: data.message || "A new comment report was submitted.",
+            read: false,
+            createdAt: data.createdAt || new Date().toISOString(),
+          },
+          ...prev,
+        ]);
+      },
+    );
+    return () => {
+      adminChannel.unbind("intel-report");
+      client.unsubscribe(adminChannelName);
+    };
+  }, []);
+
   return (
     <div className="relative">
       <button onClick={() => setOpen((v) => !v)} className="relative rounded-full border border-[#C9A96E]/40 p-2">

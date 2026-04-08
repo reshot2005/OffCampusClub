@@ -50,6 +50,9 @@ export async function GET(req: NextRequest) {
       likesCount: true,
       likes: true,
       sharesCount: true,
+      _count: {
+        select: { comments: true },
+      },
       createdAt: true,
       user: {
         select: { id: true, fullName: true, avatar: true, role: true },
@@ -74,6 +77,7 @@ export async function GET(req: NextRequest) {
       imageUrl: p.imageUrl,
       likesCount: displayPostLikes(p.id, p.likesCount ?? p.likes ?? 0),
       sharesCount: p.sharesCount ?? 0,
+      commentsCount: p._count.comments ?? 0,
       createdAt: p.createdAt.toISOString(),
       user: {
         id: p.user.id,

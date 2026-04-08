@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { markReturnFromOrbit } from "@/lib/landingNav";
 import {
   orbitProjects as staticProjects,
   orbitCategories as staticCategories,
@@ -257,16 +258,30 @@ export function OrbitCarousel() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-white text-black font-sans">
       {/* ── top bar ── */}
-      <div className="fixed top-4 left-4 right-4 z-[100] flex items-center justify-between pointer-events-none">
+      <div className="fixed top-4 left-4 right-4 z-[100] flex items-center justify-between gap-2 pointer-events-none sm:gap-3">
+        <div className="flex flex-wrap items-center gap-2 pointer-events-auto sm:gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              markReturnFromOrbit();
+              router.push("/");
+            }}
+            className="px-4 py-2 rounded-full border border-black/5 bg-white/80 backdrop-blur-md text-[11px] font-bold uppercase tracking-wider text-black/50 shadow-sm transition-all hover:text-black"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowFilter((v) => !v)}
+            className={`px-4 py-2 rounded-full border border-black/5 bg-white/80 backdrop-blur-md text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ${showFilter ? "bg-black text-white" : "text-black/50 hover:text-black"}`}
+          >
+            Categories
+          </button>
+        </div>
         <button
-          onClick={() => setShowFilter((v) => !v)}
-          className={`pointer-events-auto px-4 py-2 rounded-full border border-black/5 bg-white/80 backdrop-blur-md text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ${showFilter ? "bg-black text-white" : "text-black/50 hover:text-black"}`}
-        >
-          Categories
-        </button>
-        <button
+          type="button"
           onClick={() => setIsGrid((v) => !v)}
-          className="pointer-events-auto px-4 py-2 rounded-full border border-black/5 bg-white/80 backdrop-blur-md text-[11px] font-bold uppercase tracking-wider text-black/50 hover:text-black transition-all shadow-sm"
+          className="pointer-events-auto shrink-0 px-4 py-2 rounded-full border border-black/5 bg-white/80 backdrop-blur-md text-[11px] font-bold uppercase tracking-wider text-black/50 shadow-sm transition-all hover:text-black"
         >
           {isGrid ? "Ring View" : "Grid View"}
         </button>
@@ -314,16 +329,16 @@ export function OrbitCarousel() {
         ) : (
           <motion.div key="ring" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full w-full relative">
             <div ref={containerRef} className="relative h-full w-full select-none cursor-grab active:cursor-grabbing overflow-hidden bg-white">
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-[60]">
+              <div className="absolute inset-0 flex flex-col items-center justify-center pb-[min(14vh,6.5rem)] sm:pb-[min(16vh,7.5rem)] md:pb-[min(18vh,8.5rem)] pointer-events-none z-[60]">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={selectedProject.id + selectedProject.title}
                     initial={{ opacity: 0, scale: 0.9, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                    className="flex flex-col items-center max-w-[85vw]"
+                    className="flex flex-col items-center max-w-[min(92vw,52rem)]"
                   >
-                    <div className="w-[180px] sx:w-[220px] md:w-[340px] aspect-[16/11] rounded-2xl overflow-hidden shadow-2xl mb-4 sm:mb-6 border border-black/5 bg-gray-50">
+                    <div className="w-[230px] sm:w-[290px] md:w-[420px] lg:w-[460px] aspect-[16/11] rounded-2xl overflow-hidden shadow-2xl mb-4 sm:mb-6 border border-black/5 bg-gray-50">
                       <img src={selectedProject.image} alt={selectedProject.title} className="w-full h-full object-cover" />
                     </div>
                     <h2 className="text-xl sm:text-3xl md:text-5xl font-black tracking-tight text-center leading-[1.1] text-slate-900 px-4">

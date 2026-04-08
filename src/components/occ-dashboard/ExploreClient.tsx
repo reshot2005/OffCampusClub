@@ -33,6 +33,7 @@ type ApiPost = {
   imageUrl: string | null;
   likesCount: number;
   sharesCount: number;
+  commentsCount: number;
   createdAt: string;
   clubId: string;
   user: { id: string; fullName: string; avatar: string | null; role: string };
@@ -52,9 +53,9 @@ function toCards(posts: ApiPost[]): OCCPost[] {
       imageUrl: postImg,
       likeCount: p.likesCount,
       sharesCount: p.sharesCount,
+      commentsCount: p.commentsCount ?? 0,
       clubId: p.clubId,
       clubName: p.club?.name || "OCC Club",
-      commentsCount: 0,
     };
   });
 }
@@ -64,8 +65,24 @@ export function ExploreClient() {
   const q = (searchParams.get("q") ?? "").trim();
   const debouncedQ = useDebouncedValue(q, 300);
   const [posts, setPosts] = useState<ApiPost[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/profile", { credentials: "include" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { user?: { id?: string } };
+        if (active) setCurrentUserId(data.user?.id);
+      } catch {}
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -122,7 +139,7 @@ export function ExploreClient() {
           </div>
         ) : null}
         {cards.map((p) => (
-          <OCCPostCard key={p.id} post={p} />
+          <OCCPostCard key={p.id} post={p} currentUserId={currentUserId} />
         ))}
       </div>
     </div>

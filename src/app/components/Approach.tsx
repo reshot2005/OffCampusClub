@@ -18,12 +18,22 @@ export function ScrollTube({
   const pathRef = useRef<SVGPathElement>(null);
   const filterId = useId().replace(/:/g, "");
   const [pathLen, setPathLen] = useState(2200);
+  /** `slice` crops the sides on tall narrow viewports and cuts off the ribbon cap; `meet` keeps the full path visible. */
+  const [narrowViewport, setNarrowViewport] = useState(false);
 
   useLayoutEffect(() => {
     const el = pathRef.current;
     if (!el) return;
     const L = el.getTotalLength();
     if (L > 0) setPathLen(L);
+  }, []);
+
+  useLayoutEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sync = () => setNarrowViewport(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
   }, []);
 
   const { scrollYProgress } = useScroll({
@@ -35,24 +45,36 @@ export function ScrollTube({
 
   return (
     <svg
-      viewBox="0 0 1000 1000"
+      viewBox="0 0 1100 1000"
+      overflow="visible"
       className={
         mirror
           ? "absolute -right-[8%] -top-[18%] h-[125%] w-[85%] min-w-[280px] scale-x-[-1] text-indigo-600"
           : "absolute -left-[8%] -top-[18%] h-[125%] w-[85%] min-w-[280px] text-indigo-600"
       }
-      preserveAspectRatio="xMidYMid slice"
+      preserveAspectRatio={narrowViewport ? "xMidYMid meet" : "xMidYMid slice"}
       aria-hidden
     >
       <defs>
-        <filter id={filterId} x="-25%" y="-25%" width="150%" height="150%">
-          <feGaussianBlur stdDeviation="5" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
+        {/* Blur-only glow: merging blurred + sharp in one filter causes a visible seam
+            at round stroke caps on mobile (DPR / subpixel). Crisp stroke is drawn separately. */}
+        <filter id={filterId} x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="6" />
         </filter>
       </defs>
+      {/* Soft underlay — same dash as main stroke; animation unchanged */}
+      <motion.path
+        d={TUBE_PATH}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={86}
+        strokeOpacity={0.38}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={pathLen}
+        style={{ strokeDashoffset: dashOffset, filter: `url(#${filterId})` }}
+        shapeRendering="geometricPrecision"
+      />
       <motion.path
         ref={pathRef}
         d={TUBE_PATH}
@@ -62,7 +84,8 @@ export function ScrollTube({
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray={pathLen}
-        style={{ strokeDashoffset: dashOffset, filter: `url(#${filterId})` }}
+        style={{ strokeDashoffset: dashOffset }}
+        shapeRendering="geometricPrecision"
       />
     </svg>
   );

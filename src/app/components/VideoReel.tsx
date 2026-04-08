@@ -1,13 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MovableBlock } from "./LayoutEditor";
+import { OCC_SKIP_UNIVERSE_OVERLAY_KEY } from "@/lib/landingNav";
 
 export function VideoReel({ theme }: { theme: "dark" | "light" }) {
   const [popped, setPopped] = useState(false);
   const isDark = theme === "dark";
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(OCC_SKIP_UNIVERSE_OVERLAY_KEY) === "1") {
+        sessionStorage.removeItem(OCC_SKIP_UNIVERSE_OVERLAY_KEY);
+        setPopped(false);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setPopped(false);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   const handleClick = () => {
     setPopped(true);

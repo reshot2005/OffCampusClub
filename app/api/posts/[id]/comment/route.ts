@@ -77,15 +77,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
   });
 
-  // Broadcast to Pusher for real-time updates
   const post = await prisma.post.findUnique({
     where: { id: params.id },
     include: { club: true }
+  });
+  const commentsCount = await prisma.comment.count({
+    where: { postId: params.id },
   });
 
   if (pusherServer) {
     await pusherServer.trigger(`club-${post?.clubId}`, "new-comment", {
       postId: params.id,
+      commentsCount,
       comment: {
         id: comment.id,
         content: comment.content,
@@ -102,5 +105,5 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     });
   }
 
-  return NextResponse.json({ success: true, comment }, { status: 201 });
+  return NextResponse.json({ success: true, comment, commentsCount }, { status: 201 });
 }
