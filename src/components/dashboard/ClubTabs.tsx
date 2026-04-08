@@ -16,6 +16,7 @@ type ClubTabsProps = {
   posts: Array<{
     id: string;
     imageUrl: string;
+    imageUrls?: string[];
     caption?: string | null;
     likes: number;
     club: { name: string; icon: string };

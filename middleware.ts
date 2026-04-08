@@ -55,6 +55,15 @@ function isAdminCPPath(pathname: string) {
   );
 }
 
+function isAdminApiPath(pathname: string) {
+  return (
+    pathname === "/api/admin-cp" ||
+    pathname.startsWith("/api/admin-cp/") ||
+    pathname === "/api/admin" ||
+    pathname.startsWith("/api/admin/")
+  );
+}
+
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get("occ-token")?.value;
   const { pathname, search } = req.nextUrl;
@@ -62,6 +71,22 @@ export async function middleware(req: NextRequest) {
 
   if (isLegacyAdminPath(pathname) || isInternalStaffPath(pathname)) {
     return new NextResponse(null, { status: 404 });
+  }
+
+  // Extra gate for admin APIs: hide endpoints from unauthenticated/non-admin callers.
+  if (isAdminApiPath(pathname)) {
+    if (!token) return new NextResponse(null, { status: 404 });
+    try {
+      const payload = await verifyAuthToken(token);
+      if (payload.role !== "ADMIN" || payload.suspended) {
+        return new NextResponse(null, { status: 404 });
+      }
+      return NextResponse.next();
+    } catch {
+      const response = new NextResponse(null, { status: 404 });
+      response.cookies.delete("occ-token");
+      return response;
+    }
   }
 
   const isProtected = PROTECTED_PATHS.some((path) => pathname.startsWith(path));
@@ -164,7 +189,7 @@ export async function middleware(req: NextRequest) {
 
       return NextResponse.next();
     } catch {
-      if (isStaffPanel) {
+      if (isStaffPanel || isAdminCP) {
         const gate = new URL(staffGateHref(), req.url);
         gate.searchParams.set("next", pathname + (search || ""));
         return NextResponse.redirect(gate);
@@ -235,6 +260,8 @@ export const config = {
     "/k9xm2p7qv4nw8-stf/:path*",
     "/k9xm2p7qv4nw8-admin-control-panel",
     "/k9xm2p7qv4nw8-admin-control-panel/:path*",
+    "/api/admin/:path*",
+    "/api/admin-cp/:path*",
     "/admin-control-panel-internal",
     "/admin-control-panel-internal/:path*",
     "/staff-gate-internal",

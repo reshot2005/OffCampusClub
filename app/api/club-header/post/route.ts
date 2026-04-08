@@ -12,8 +12,14 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const parsed = postCreateSchema.parse(body);
-  const clubId = user.clubManaged?.id || parsed.clubId;
-  if (!clubId) return NextResponse.json({ error: "No club assigned" }, { status: 400 });
+  const managedClubId = user.clubManaged?.id ?? null;
+  if (!managedClubId) {
+    return NextResponse.json({ error: "No club assigned" }, { status: 400 });
+  }
+  if (parsed.clubId !== managedClubId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  const clubId = managedClubId;
 
   const post = await prisma.post.create({
     data: {

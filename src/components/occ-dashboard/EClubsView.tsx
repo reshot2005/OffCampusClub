@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { Clock, Loader2, Plus, X } from "lucide-react";
+import { Clock, Loader2, Plus, Upload, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { pusherClient } from "@/lib/pusher";
 import { ECLUBS_PUSHER_CHANNEL } from "@/lib/gigs-realtime";
@@ -29,7 +29,7 @@ type GigRow = {
   payMin: number;
   payMax: number;
   deadline: Date | string | null;
-  club: { name: string; slug: string; icon: string } | null;
+  club: { name: string; slug: string; icon: string; coverImage?: string | null } | null;
   postedBy: { fullName: string } | null;
   applications: { id: string; status: string }[];
 };
@@ -68,6 +68,9 @@ export function EClubsView({
   const [fEmail, setFEmail] = useState(applicantProfile.email);
   const [fPhone, setFPhone] = useState(applicantProfile.phoneNumber);
   const [fPitch, setFPitch] = useState("");
+  const [workDescription, setWorkDescription] = useState("");
+  const [submissionFile, setSubmissionFile] = useState<File | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
   const [applyLoading, setApplyLoading] = useState(false);
   const [justSubmitted, setJustSubmitted] = useState<string | null>(null);
 
@@ -89,10 +92,39 @@ export function EClubsView({
     setFEmail(applicantProfile.email);
     setFPhone(applicantProfile.phoneNumber);
     setFPitch("");
+    setWorkDescription("");
+    setSubmissionFile(null);
   };
 
   const closeApplyModal = () => {
     setApplyModalGigId(null);
+  };
+
+  const uploadSubmissionFile = async (): Promise<{
+    url: string;
+    name: string;
+    mime: string;
+    size: number;
+  } | null> => {
+    if (!submissionFile) return null;
+    const formData = new FormData();
+    formData.append("file", submissionFile);
+    formData.append("purpose", "gig_submission");
+    setUploadingFile(true);
+    try {
+      const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!uploadRes.ok) return null;
+      const payload = (await uploadRes.json()) as { success?: boolean; url?: string };
+      if (!payload?.url) return null;
+      return {
+        url: payload.url,
+        name: submissionFile.name,
+        mime: submissionFile.type || "application/octet-stream",
+        size: submissionFile.size,
+      };
+    } finally {
+      setUploadingFile(false);
+    }
   };
 
   const submitApply = async (e: React.FormEvent) => {
@@ -100,6 +132,8 @@ export function EClubsView({
     if (!applyModalGigId) return;
     setApplyLoading(true);
     try {
+      const maybeUploaded = await uploadSubmissionFile();
+      const finalFileMeta = maybeUploaded;
       const res = await fetch("/api/gigs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -109,6 +143,11 @@ export function EClubsView({
           applicantName: fName.trim(),
           applicantEmail: fEmail.trim(),
           applicantPhone: fPhone.trim(),
+          workDescription: workDescription.trim(),
+          submissionFileUrl: finalFileMeta?.url,
+          submissionFileName: finalFileMeta?.name,
+          submissionFileMime: finalFileMeta?.mime,
+          submissionFileSize: finalFileMeta?.size,
         }),
       });
       if (res.ok) {
@@ -238,17 +277,56 @@ export function EClubsView({
                     className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-400"
                   />
                 </div>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Work completion description
+                    </label>
+                    <span className="text-[10px] font-medium text-slate-400">{workDescription.length}/1000</span>
+                  </div>
+                  <textarea
+                    required
+                    value={workDescription}
+                    onChange={(e) => setWorkDescription(e.target.value.slice(0, 1000))}
+                    placeholder="Describe what you completed / how you will execute this task"
+                    rows={4}
+                    className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-400"
+                  />
+                </div>
+                <div className="rounded-xl border border-slate-200 p-3">
+                  <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    Attach submission (PDF, DOC, DOCX, PPT, PPTX up to 30MB)
+                  </label>
+                  <div className="mt-2 flex items-center gap-2">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                      <Upload className="h-3.5 w-3.5" />
+                      Choose file
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          setSubmissionFile(file);
+                        }}
+                      />
+                    </label>
+                    <span className="min-w-0 truncate text-xs text-slate-500">
+                      {submissionFile?.name || "No file selected"}
+                    </span>
+                  </div>
+                </div>
                 <motion.button
                   type="submit"
-                  disabled={applyLoading}
-                  whileHover={{ scale: applyLoading ? 1 : 1.02 }}
-                  whileTap={{ scale: applyLoading ? 1 : 0.98 }}
+                  disabled={applyLoading || uploadingFile}
+                  whileHover={{ scale: applyLoading || uploadingFile ? 1 : 1.02 }}
+                  whileTap={{ scale: applyLoading || uploadingFile ? 1 : 0.98 }}
                   className="relative w-full overflow-hidden rounded-2xl bg-slate-900 py-3.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 disabled:opacity-60"
                 >
-                  {applyLoading ? (
+                  {applyLoading || uploadingFile ? (
                     <span className="inline-flex items-center justify-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Sending…
+                      {uploadingFile ? "Uploading file…" : "Sending…"}
                     </span>
                   ) : (
                     "Submit application"
@@ -382,8 +460,19 @@ export function EClubsView({
             return (
               <article
                 key={gig.id}
-                className="flex flex-col overflow-hidden rounded-[28px] border border-slate-200/90 bg-white p-6 shadow-[0_8px_32px_rgba(15,23,42,0.06)]"
+                className="relative flex flex-col overflow-hidden rounded-[28px] border border-slate-200/90 bg-white p-6 shadow-[0_8px_32px_rgba(15,23,42,0.06)]"
               >
+                {gig.club?.coverImage ? (
+                  <>
+                    <img
+                      src={gig.club.coverImage}
+                      alt=""
+                      className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.14]"
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/55 via-white/80 to-white/95" />
+                  </>
+                ) : null}
+                <div className="relative z-10">
                 <div className="flex items-start justify-between gap-3">
                   <h2 className="min-w-0 flex-1 text-[17px] font-bold leading-snug tracking-tight text-slate-900">
                     {gig.title}
@@ -479,6 +568,7 @@ export function EClubsView({
                     </motion.button>
                   </div>
                 )}
+                </div>
               </article>
             );
           })

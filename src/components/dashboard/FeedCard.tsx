@@ -9,6 +9,7 @@ import { cn } from "@/app/components/ui/utils";
 type FeedCardProps = {
   post: {
     imageUrl: string;
+    imageUrls?: string[];
     caption?: string | null;
     likes: number;
     club: { name: string; icon: string };
@@ -19,7 +20,17 @@ type FeedCardProps = {
 
 export function FeedCard({ post }: FeedCardProps) {
   const [liked, setLiked] = React.useState(false);
+  const [activeImage, setActiveImage] = React.useState(0);
   const displayLikes = (post.likes || 1240) + (liked ? 1 : 0);
+  const media = React.useMemo(() => {
+    const list = (post.imageUrls || []).filter(Boolean);
+    if (list.length > 0) return list;
+    return [post.imageUrl];
+  }, [post.imageUrl, post.imageUrls]);
+
+  React.useEffect(() => {
+    setActiveImage(0);
+  }, [post.imageUrl, post.imageUrls]);
   
   return (
     <div className="mx-auto w-full max-w-[850px] overflow-hidden rounded-[32px] bg-white border border-black/5 shadow-[0_10px_40px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_20px_60px_rgb(0,0,0,0.07)] group mb-10">
@@ -27,12 +38,46 @@ export function FeedCard({ post }: FeedCardProps) {
         
         {/* Left: Media Column */}
         <div className="w-full md:w-[55%] relative aspect-square md:aspect-auto overflow-hidden bg-slate-100">
-           <img
-            src={post.imageUrl || "https://images.unsplash.com/photo-1549490349-86ecf13d8650?w=800&q=80"}
+          <img
+            src={media[activeImage] || "https://images.unsplash.com/photo-1549490349-86ecf13d8650?w=800&q=80"}
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             alt="Club Post"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          {media.length > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setActiveImage((prev) => (prev === 0 ? media.length - 1 : prev - 1))}
+                className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/55 px-2 py-1.5 text-xs font-bold text-white/90"
+                aria-label="Previous image"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveImage((prev) => (prev + 1) % media.length)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/55 px-2 py-1.5 text-xs font-bold text-white/90"
+                aria-label="Next image"
+              >
+                ›
+              </button>
+              <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/45 px-2 py-1">
+                {media.map((_, idx) => (
+                  <button
+                    key={`dot-${idx}`}
+                    type="button"
+                    onClick={() => setActiveImage(idx)}
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      idx === activeImage ? "bg-white" : "bg-white/45",
+                    )}
+                    aria-label={`Open image ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            </>
+          ) : null}
         </div>
 
         {/* Right: Content & Engagement Column */}

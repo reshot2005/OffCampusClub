@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("posts", "read");
   if (admin instanceof NextResponse) return admin;
 
   const clubId = req.nextUrl.searchParams.get("clubId");

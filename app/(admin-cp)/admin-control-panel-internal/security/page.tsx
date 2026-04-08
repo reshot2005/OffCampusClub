@@ -8,8 +8,14 @@ import { formatDistanceToNow } from "date-fns";
 
 type Alert = { id: string; userId: string | null; ipAddress: string; userAgent: string | null; path: string; reason: string; severity: string; resolved: boolean; createdAt: string };
 
+type OtpStats = {
+  tokensCreatedLast24h: number;
+  byPurposeLast7d: { purpose: string; count: number }[];
+};
+
 export default function SecurityPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [otpStats, setOtpStats] = useState<OtpStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("false");
 
@@ -19,6 +25,7 @@ export default function SecurityPage() {
       const res = await fetch(`/api/admin-cp/security?resolved=${filter}`);
       const data = await res.json();
       setAlerts(data.alerts);
+      if (data.otpStats) setOtpStats(data.otpStats);
     } catch {} finally { setLoading(false); }
   };
 
@@ -52,6 +59,25 @@ export default function SecurityPage() {
           <ShieldAlert className="h-6 w-6 text-red-400" /> Security Alerts
         </h1>
       </div>
+
+      {otpStats && (
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-white/40 mb-3">Email OTP (abuse signal)</p>
+          <div className="flex flex-wrap gap-6 text-sm">
+            <div>
+              <span className="text-white/30 text-xs block">Tokens created (24h)</span>
+              <span className="font-mono text-white font-semibold">{otpStats.tokensCreatedLast24h}</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {otpStats.byPurposeLast7d.map((p) => (
+                <span key={p.purpose} className="text-xs text-white/50">
+                  {p.purpose}: <span className="text-[#5227FF] font-mono">{p.count}</span> <span className="text-white/25">(7d)</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-2">
         {[{ v: "false", l: "Unresolved" }, { v: "true", l: "Resolved" }].map(({ v, l }) => (

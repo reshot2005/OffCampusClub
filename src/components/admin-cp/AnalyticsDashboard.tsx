@@ -8,6 +8,13 @@ type Props = {
   postsByDay: { date: string; count: number }[];
   topClubs: { name: string; members: number }[];
   roleDistribution: { role: string; count: number }[];
+  funnel: {
+    totalUsers: number;
+    onboardingComplete: number;
+    withClubMembership: number;
+    withPost: number;
+  };
+  referralByClub: { clubName: string; signups: number }[];
 };
 
 function MiniChart({ data, color, label }: { data: { date: string; count: number }[]; color: string; label: string }) {
@@ -38,9 +45,29 @@ function MiniChart({ data, color, label }: { data: { date: string; count: number
   );
 }
 
-export function AnalyticsDashboard({ signupsByDay, postsByDay, topClubs, roleDistribution }: Props) {
+function FunnelStep({ label, value, total }: { label: string; value: number; total: number }) {
+  const pct = total > 0 ? ((value / total) * 100).toFixed(1) : "0";
+  return (
+    <div className="flex items-center justify-between gap-3 py-2 border-b border-white/[0.04] last:border-0">
+      <span className="text-xs text-white/60">{label}</span>
+      <span className="text-xs font-mono text-[#5227FF]">
+        {value} <span className="text-white/25">({pct}%)</span>
+      </span>
+    </div>
+  );
+}
+
+export function AnalyticsDashboard({
+  signupsByDay,
+  postsByDay,
+  topClubs,
+  roleDistribution,
+  funnel,
+  referralByClub,
+}: Props) {
   const totalRoles = roleDistribution.reduce((s, r) => s + r.count, 0);
   const maxMembers = Math.max(1, ...topClubs.map((c) => c.members));
+  const maxRef = Math.max(1, ...referralByClub.map((r) => r.signups));
 
   return (
     <div className="space-y-6">
@@ -56,6 +83,43 @@ export function AnalyticsDashboard({ signupsByDay, postsByDay, topClubs, roleDis
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <MiniChart data={signupsByDay} color="#5227FF" label="Signups / day" />
         <MiniChart data={postsByDay} color="#00E87A" label="Posts / day" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+          <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+            <FileText className="h-4 w-4 text-[#00E87A]" /> Activation funnel
+          </h3>
+          <p className="text-[10px] text-white/30 mb-2">Share of all users reaching each milestone</p>
+          <FunnelStep label="Registered" value={funnel.totalUsers} total={funnel.totalUsers} />
+          <FunnelStep label="Onboarding complete" value={funnel.onboardingComplete} total={funnel.totalUsers} />
+          <FunnelStep label="Joined ≥1 club" value={funnel.withClubMembership} total={funnel.totalUsers} />
+          <FunnelStep label="Created ≥1 post" value={funnel.withPost} total={funnel.totalUsers} />
+        </div>
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+          <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-[#D4AF37]" /> Referral signups by club
+          </h3>
+          <div className="space-y-2">
+            {referralByClub.length === 0 && (
+              <p className="text-xs text-white/25">No referral stats yet</p>
+            )}
+            {referralByClub.map((r, i) => (
+              <div key={r.clubName + i} className="flex items-center gap-2">
+                <span className="text-[10px] text-white/40 w-24 truncate">{r.clubName}</span>
+                <div className="flex-1 h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full bg-gradient-to-r from-[#D4AF37] to-[#FF6B35]"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(r.signups / maxRef) * 100}%` }}
+                    transition={{ duration: 0.6, delay: i * 0.04 }}
+                  />
+                </div>
+                <span className="text-[10px] font-mono text-white/50 w-8">{r.signups}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

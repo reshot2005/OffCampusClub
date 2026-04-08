@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("approvals", "reject");
   if (admin instanceof NextResponse) return admin;
 
   const body = await req.json().catch(() => ({}));

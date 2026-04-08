@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { prisma } from "@/lib/prisma";
 import { gigWhereNotLegacyDummy } from "@/lib/legacyDummyGigs";
 
 /** Full gig + application pipeline for staff oversight. */
 export async function GET() {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("gigs", "read");
   if (admin instanceof NextResponse) return admin;
 
   const gigs = await prisma.gig.findMany({

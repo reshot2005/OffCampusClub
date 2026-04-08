@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Grid3X3, Users, FileText, Calendar, Orbit, Briefcase,
   CheckCircle2, TrendingUp, ScrollText, ShieldAlert, Settings, Download,
-  ChevronRight, LogOut, MoreHorizontal, Bell,
+  ChevronRight, LogOut, MoreHorizontal, Shield, Flag, ToggleLeft, Radio, Clock, FileKey, Activity,
 } from "lucide-react";
 import { adminCpHref, ADMIN_CP_PREFIX } from "@/lib/staff-paths";
-import { type AdminLevel, hasPermission, type AdminModule } from "@/lib/admin-permissions";
+import { type AdminLevel, can, type AdminModule, type EffectiveAdminAccess } from "@/lib/admin-permissions";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import { useLogout } from "@/hooks/useLogout";
@@ -28,34 +28,70 @@ const nav: NavItem[] = [
   { path: "/users", label: "Users", icon: Users, module: "users" },
   { path: "/posts", label: "Posts", icon: FileText, module: "posts" },
   { path: "/events", label: "Events", icon: Calendar, module: "events" },
-  { path: "/orbit", label: "Orbit", icon: Orbit, module: "events" },
+  { path: "/orbit", label: "Orbit", icon: Orbit, module: "orbit" },
   { path: "/gigs", label: "Gigs", icon: Briefcase, module: "gigs" },
   { path: "/approvals", label: "Approvals", icon: CheckCircle2, badgeKey: "pending", module: "approvals" },
+  { path: "/moderation", label: "Moderation", icon: Flag, module: "moderation" },
   { path: "/analytics", label: "Analytics", icon: TrendingUp, module: "analytics" },
   { path: "/audit", label: "Audit Log", icon: ScrollText, module: "audit" },
   { path: "/security", label: "Security", icon: ShieldAlert, badgeKey: "alerts", module: "security" },
+  { path: "/roles", label: "Roles", icon: Shield, module: "roles" },
+  { path: "/feature-flags", label: "Feature flags", icon: ToggleLeft, module: "feature_flags" },
+  { path: "/broadcasts", label: "Broadcasts", icon: Radio, module: "broadcasts" },
+  { path: "/scheduled-announcements", label: "Scheduled banners", icon: Clock, module: "announcement_schedule" },
+  { path: "/compliance", label: "Compliance", icon: FileKey, module: "compliance" },
   { path: "/settings", label: "Settings", icon: Settings, module: "settings" },
   { path: "/export", label: "Export", icon: Download, module: "export" },
 ];
 
+function toEffectiveAccess(
+  adminAccess: { fullAccess: true } | { fullAccess: false; matrix: Record<string, string[]> },
+): EffectiveAdminAccess {
+  if (adminAccess.fullAccess) return { fullAccess: true };
+  return { fullAccess: false, matrix: adminAccess.matrix };
+}
+
 export function AdminCPShell({
-  children, pendingCount, alertCount, adminUser,
+  children, pendingCount, alertCount, adminUser, adminAccess,
 }: {
   children: React.ReactNode;
   pendingCount: number;
   alertCount: number;
-  adminUser: { id: string; fullName: string; email: string; adminLevel: string | null };
+  adminUser: {
+    id: string;
+    fullName: string;
+    email: string;
+    adminLevel: string | null;
+    roleTemplateName?: string | null;
+  };
+  adminAccess: { fullAccess: true } | { fullAccess: false; matrix: Record<string, string[]> };
 }) {
   const pathname = usePathname();
   const logout = useLogout();
   const [mounted, setMounted] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [siem, setSiem] = useState<{
+    loading: boolean;
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+    recent: Array<{ id: string; reason: string; severity: string; createdAt: string }>;
+  }>({
+    loading: true,
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    recent: [],
+  });
   const profileRef = useRef<HTMLDivElement>(null);
   const al = (adminUser.adminLevel ?? "SUPER_ADMIN") as AdminLevel;
+  const access = toEffectiveAccess(adminAccess);
 
   const visibleNav = nav.filter((item) => {
     if (item.module === "dashboard") return true;
-    return hasPermission(al, item.module, "read");
+    return can(access, item.module, "read");
   });
 
   useEffect(() => {
@@ -66,6 +102,40 @@ export function AdminCPShell({
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  useEffect(() => {
+    if (!can(access, "security", "read")) return;
+    let alive = true;
+    const pull = async () => {
+      try {
+        const res = await fetch("/api/admin-cp/security?resolved=false", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const alerts = Array.isArray(data?.alerts) ? data.alerts : [];
+        const next = {
+          critical: alerts.filter((a: any) => String(a?.severity || "").toUpperCase() === "CRITICAL").length,
+          high: alerts.filter((a: any) => String(a?.severity || "").toUpperCase() === "HIGH").length,
+          medium: alerts.filter((a: any) => String(a?.severity || "").toUpperCase() === "MEDIUM").length,
+          low: alerts.filter((a: any) => String(a?.severity || "").toUpperCase() === "LOW").length,
+          recent: alerts.slice(0, 3).map((a: any) => ({
+            id: String(a.id),
+            reason: String(a.reason || "Suspicious activity"),
+            severity: String(a.severity || "MEDIUM").toUpperCase(),
+            createdAt: String(a.createdAt || ""),
+          })),
+        };
+        if (alive) setSiem((prev) => ({ ...prev, loading: false, ...next }));
+      } catch {
+        if (alive) setSiem((prev) => ({ ...prev, loading: false }));
+      }
+    };
+    void pull();
+    const timer = window.setInterval(pull, 12000);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+    };
+  }, [access]);
 
   const navWithHref = visibleNav.map((item) => ({ ...item, href: adminCpHref(item.path) }));
 
@@ -148,6 +218,44 @@ export function AdminCPShell({
                 );
               })}
             </nav>
+
+            {can(access, "security", "read") && (
+              <Link href={adminCpHref("/security")} className="mt-4 block">
+                <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-red-300">
+                      <Activity className="h-3.5 w-3.5" /> Mini SIEM
+                    </div>
+                    {!siem.loading && (
+                      <span className="text-[10px] text-white/45">
+                        Live
+                      </span>
+                    )}
+                  </div>
+                  {siem.loading ? (
+                    <p className="text-[11px] text-white/40">Loading alerts...</p>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-4 gap-1.5 text-center text-[10px]">
+                        <div className="rounded-md bg-[#2a0a0a] py-1 text-red-300">C {siem.critical}</div>
+                        <div className="rounded-md bg-[#2a0f0a] py-1 text-orange-300">H {siem.high}</div>
+                        <div className="rounded-md bg-[#1d1a0a] py-1 text-yellow-300">M {siem.medium}</div>
+                        <div className="rounded-md bg-[#111827] py-1 text-blue-300">L {siem.low}</div>
+                      </div>
+                      <div className="mt-2 space-y-1">
+                        {siem.recent.length === 0 ? (
+                          <p className="text-[10px] text-white/35">No unresolved alerts.</p>
+                        ) : siem.recent.map((a) => (
+                          <p key={a.id} className="truncate text-[10px] text-white/50">
+                            [{a.severity}] {a.reason}
+                          </p>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </Link>
+            )}
           </div>
 
           {/* Profile */}
@@ -174,8 +282,12 @@ export function AdminCPShell({
                 </div>
                 <div className="flex flex-col max-w-[120px]">
                   <span className="text-[13px] font-semibold text-white/90 truncate">{adminUser.fullName}</span>
-                  <span className="text-[9px] font-medium text-[#5227FF] uppercase tracking-wider">
-                    {al === "MODERATOR" ? "Moderator" : "Super Admin"}
+                  <span className="text-[9px] font-medium text-[#5227FF] uppercase tracking-wider truncate">
+                    {adminUser.roleTemplateName
+                      ? adminUser.roleTemplateName
+                      : al === "MODERATOR"
+                        ? "Moderator"
+                        : "Super Admin"}
                   </span>
                 </div>
               </div>

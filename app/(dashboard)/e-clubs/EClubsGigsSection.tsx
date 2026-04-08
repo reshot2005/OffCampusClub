@@ -17,7 +17,7 @@ export async function EClubsGigsSection() {
     where: { ...gigWhereNotLegacyDummy },
     orderBy: { createdAt: "desc" },
     include: {
-      club: { select: { name: true, slug: true, icon: true } },
+      club: { select: { name: true, slug: true, icon: true, coverImage: true } },
       postedBy: { select: { fullName: true } },
       applications: {
         where: { userId: user.id },

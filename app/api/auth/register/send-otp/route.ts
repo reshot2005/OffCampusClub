@@ -10,9 +10,6 @@ const sendOtpSchema = z.object({
 
 type OtpPurpose = "REGISTER";
 
-// Simple in-memory throttle to reduce OTP spam in dev.
-const rateMap = (globalThis as any).__occOtpRateMap ?? ((globalThis as any).__occOtpRateMap = new Map());
-
 export async function POST(req: NextRequest) {
   try {
     if (!process.env.DATABASE_URL) {
@@ -22,13 +19,18 @@ export async function POST(req: NextRequest) {
     const { email } = sendOtpSchema.parse(await req.json());
     const purpose: OtpPurpose = "REGISTER";
 
-    const key = `${purpose}:${email}`;
     const now = Date.now();
     const windowMs = 60_000; // 1 minute
     const maxPerWindow = 3;
 
-    const prev = rateMap.get(key) as { count: number; resetAt: number } | undefined;
-    if (prev && prev.resetAt > now && prev.count >= maxPerWindow) {
+    const sentRecently = await prisma.emailOtpToken.count({
+      where: {
+        email,
+        purpose,
+        createdAt: { gte: new Date(now - windowMs) },
+      },
+    });
+    if (sentRecently >= maxPerWindow) {
       return NextResponse.json({ success: true }, { status: 200 });
     }
 
@@ -54,10 +56,6 @@ export async function POST(req: NextRequest) {
         expiresAt: new Date(Date.now() + 10 * 60_000), // 10 minutes
       },
     });
-
-    // Update throttle counter.
-    const resetAt = now + windowMs;
-    rateMap.set(key, { count: (prev?.count ?? 0) + 1, resetAt });
 
     await sendOtpEmail({ to: email, code: otp, purpose: "REGISTER" });
 

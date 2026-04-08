@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { logAudit } from "@/lib/audit";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("orbit", "update");
   if (admin instanceof NextResponse) return admin;
 
   const body = await req.json();
@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("orbit", "delete");
   if (admin instanceof NextResponse) return admin;
 
   await prisma.orbitProject.delete({ where: { id: params.id } });

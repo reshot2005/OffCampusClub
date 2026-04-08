@@ -8,11 +8,6 @@ const sendOtpSchema = z.object({
   email: z.string().email("Enter a valid email"),
 });
 
-// Throttle map for dev only.
-const rateMap =
-  (globalThis as any).__occOtpResetRateMap ??
-  ((globalThis as any).__occOtpResetRateMap = new Map());
-
 export async function POST(req: NextRequest) {
   try {
     if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured");
@@ -26,13 +21,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true }, { status: 200 });
     }
 
-    const key = `${purpose}:${email}`;
     const now = Date.now();
     const windowMs = 60_000; // 1 minute
     const maxPerWindow = 3;
-
-    const prev = rateMap.get(key) as { count: number; resetAt: number } | undefined;
-    if (prev && prev.resetAt > now && prev.count >= maxPerWindow) {
+    const sentRecently = await prisma.emailOtpToken.count({
+      where: {
+        email,
+        purpose,
+        createdAt: { gte: new Date(now - windowMs) },
+      },
+    });
+    if (sentRecently >= maxPerWindow) {
       return NextResponse.json({ success: true }, { status: 200 });
     }
 
@@ -57,8 +56,6 @@ export async function POST(req: NextRequest) {
         expiresAt: new Date(Date.now() + 10 * 60_000),
       },
     });
-
-    rateMap.set(key, { count: (prev?.count ?? 0) + 1, resetAt: now + windowMs });
 
     await sendOtpEmail({ to: email, code: otp, purpose });
     return NextResponse.json({ success: true }, { status: 200 });

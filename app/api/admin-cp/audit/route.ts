@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 
 export async function GET(req: Request) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("audit", "read");
   if (admin instanceof NextResponse) return admin;
 
   const { searchParams } = new URL(req.url);

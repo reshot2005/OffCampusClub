@@ -14,6 +14,8 @@ function StaffGateInner() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [stage, setStage] = useState<"password" | "otp">("password");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -26,13 +28,19 @@ function StaffGateInner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(stage === "otp" ? { email, password, otp } : { email, password }),
       });
       const data = (await res.json().catch(() => null)) as {
         error?: string;
         role?: string;
         approvalStatus?: string;
+        mfaRequired?: boolean;
       } | null;
+      if (res.status === 202 && data?.mfaRequired) {
+        setStage("otp");
+        setError("");
+        return;
+      }
       if (!res.ok) {
         setError(data?.error ?? "Access denied.");
         return;
@@ -91,6 +99,24 @@ function StaffGateInner() {
               placeholder="••••••••"
             />
           </div>
+          {stage === "otp" ? (
+            <div>
+              <label className="font-mono text-[10px] uppercase tracking-widest text-white/40">OTP</label>
+              <input
+                inputMode="numeric"
+                pattern="\\d{6}"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\\D/g, "").slice(0, 6))}
+                required
+                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-[#F5F1EB] outline-none placeholder:text-white/30 focus:border-[#C9A96E]/50"
+                placeholder="6-digit code"
+              />
+              <p className="mt-2 text-xs text-white/40">
+                We emailed a 6-digit code to you. Submit again to verify.
+              </p>
+            </div>
+          ) : null}
           {error ? (
             <p className="rounded-lg border border-[#FF4D4D]/35 bg-[#FF4D4D]/10 px-3 py-2 text-sm text-[#FF4D4D]">{error}</p>
           ) : null}

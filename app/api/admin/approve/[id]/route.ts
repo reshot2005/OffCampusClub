@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { prisma } from "@/lib/prisma";
 import { generateReferralCode } from "@/lib/referral";
 import { pusherServer } from "@/lib/pusher";
 
 export async function PATCH(_req: NextRequest, { params }: { params: { id: string } }) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("approvals", "approve");
   if (admin instanceof NextResponse) return admin;
 
   const target = await prisma.user.findUnique({

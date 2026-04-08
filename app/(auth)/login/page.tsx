@@ -36,7 +36,12 @@ function LoginPageInner() {
         error?: string;
         role?: string;
         approvalStatus?: string;
+        mfaRequired?: boolean;
       } | null;
+      if (res.status === 202 && data?.mfaRequired) {
+        router.push(`${STAFF_PUBLIC_PREFIX}/gate?next=${encodeURIComponent(redirectTo)}`);
+        return;
+      }
       if (!res.ok) {
         setError(data?.error ?? "Invalid credentials. Please try again.");
         return;

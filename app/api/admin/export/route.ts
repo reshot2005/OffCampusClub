@@ -1,18 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { prisma } from "@/lib/prisma";
+import type { AdminAction } from "@/lib/admin-permissions";
 
 function csvEscape(s: string | number | boolean | null | undefined) {
-  const v = s == null ? "" : String(s);
+  let v = s == null ? "" : String(s);
+  if (/^[=\-+@]/.test(v)) v = `'${v}`;
   if (/[",\n]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
   return v;
 }
 
 export async function GET(req: NextRequest) {
-  const admin = await requireAdminApi();
-  if (admin instanceof NextResponse) return admin;
-
   const type = req.nextUrl.searchParams.get("type") || "summary";
+  const typeToAction: Record<string, AdminAction> = {
+    users: "csv_users",
+    posts: "csv_posts",
+    clubs: "csv_clubs",
+    events: "csv_events",
+    gigs: "csv_gigs",
+  };
+  const admin =
+    typeToAction[type]
+      ? await requireAdminPermission("export", typeToAction[type])
+      : await requireAdminPermission("analytics", "read");
+  if (admin instanceof NextResponse) return admin;
 
   if (type === "users") {
     const users = await prisma.user.findMany({

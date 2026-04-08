@@ -153,9 +153,14 @@ export default async function ClubDetailPage({
         posts={club.posts.map((p) => {
           const avatar = p.user.avatar || INDIAN_PROFILE_PICS[Math.floor(Math.random() * INDIAN_PROFILE_PICS.length)];
           const postImg = resolvePostImageUrlForFeed(p.imageUrl, club.name);
+          const postImgs =
+            Array.isArray(p.imageUrls) && p.imageUrls.length > 0
+              ? p.imageUrls.map((img) => resolvePostImageUrlForFeed(img, club.name))
+              : [postImg];
           return {
             id: p.id,
             imageUrl: postImg,
+            imageUrls: postImgs,
             caption: p.caption || p.content || "",
             likes: displayPostLikes(p.id, p.likesCount ?? p.likes ?? 1240),
             createdAt: p.createdAt.toISOString(),

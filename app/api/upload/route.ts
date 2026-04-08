@@ -22,23 +22,49 @@ export async function POST(req: NextRequest) {
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
+  const purpose = String(formData.get("purpose") || "posts").toLowerCase();
 
-  if (!file || !file.type.startsWith("image/")) {
-    return NextResponse.json({ error: "No valid image file provided" }, { status: 400 });
+  const isGigSubmission = purpose === "gig_submission";
+  const allowedGigMime = new Set([
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ]);
+
+  if (!file) {
+    return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
-  if (file.size > 8 * 1024 * 1024) {
-    return NextResponse.json({ error: "File too large (max 8MB)" }, { status: 400 });
+  if (isGigSubmission) {
+    if (!allowedGigMime.has(file.type)) {
+      return NextResponse.json(
+        { error: "Invalid file type. Allowed: PDF, DOC, DOCX, PPT, PPTX." },
+        { status: 400 },
+      );
+    }
+    if (file.size > 30 * 1024 * 1024) {
+      return NextResponse.json({ error: "File too large (max 30MB)" }, { status: 400 });
+    }
+  } else {
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json({ error: "No valid image file provided" }, { status: 400 });
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      return NextResponse.json({ error: "File too large (max 8MB)" }, { status: 400 });
+    }
   }
 
   const ext = file.name.split(".").pop()?.replace(/[^a-z0-9]/gi, "") || "jpg";
   const bytes = Buffer.from(await file.arrayBuffer());
   const isDev = process.env.NODE_ENV === "development";
 
-  const purpose = String(formData.get("purpose") || "posts").toLowerCase();
   const folder =
     purpose === "avatar" || purpose === "profile"
       ? "occ/avatars"
+      : purpose === "gig_submission"
+        ? "occ/gig-submissions"
       : purpose === "post" || purpose === "posts"
         ? "occ/posts"
         : `occ/${purpose.replace(/[^a-z0-9/_-]/gi, "_").slice(0, 32) || "uploads"}`;
@@ -48,7 +74,7 @@ export async function POST(req: NextRequest) {
     const fileName = `uploads/${user.id}/${randomUUID()}.${ext}`;
     const blob = await put(fileName, file, {
       access: "public",
-      contentType: file.type || "image/jpeg",
+      contentType: file.type || "application/octet-stream",
     });
     return blob.url;
   }
@@ -59,7 +85,7 @@ export async function POST(req: NextRequest) {
       const url = await uploadImageBuffer({
         buffer: bytes,
         folder,
-        contentType: file.type || "image/jpeg",
+        contentType: file.type || "application/octet-stream",
       });
       return NextResponse.json({ success: true, url });
     } catch (e) {

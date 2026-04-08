@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { attachStudentToReferralCode } from "@/lib/attach-referral";
 import { authCookieOptions, signAuthToken } from "@/lib/jwt";
+import { logSuspiciousAccess } from "@/lib/security";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,6 +13,24 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    if (body && typeof body === "object" && !Array.isArray(body)) {
+      const raw = body as Record<string, unknown>;
+      const attempted = ["role", "adminLevel", "adminRoleTemplateId", "approvalStatus"].filter(
+        (k) => k in raw,
+      );
+      if (attempted.length) {
+        const forwarded = req.headers.get("x-forwarded-for") || "";
+        const ip = forwarded.split(",")[0]?.trim() || "unknown";
+        await logSuspiciousAccess({
+          userId: user.id,
+          ipAddress: ip,
+          userAgent: req.headers.get("user-agent") || undefined,
+          path: "/api/onboarding/complete",
+          reason: `Role/privilege field(s) present in onboarding request: ${attempted.join(", ")}`,
+          severity: "HIGH",
+        });
+      }
+    }
     const { referralSource, referralCode } = body as {
       referralSource?: string;
       referralCode?: string;

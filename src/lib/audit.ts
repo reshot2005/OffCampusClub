@@ -11,9 +11,26 @@ export type AuditAction =
   | "APPROVE_HEADER" | "REJECT_HEADER"
   | "UPDATE_SETTINGS"
   | "EXPORT_CSV"
-  | "RESOLVE_ALERT";
+  | "RESOLVE_ALERT"
+  | "ADMIN_ROLE_CREATE"
+  | "ADMIN_ROLE_UPDATE"
+  | "ADMIN_ROLE_DELETE"
+  | "MODERATION_TICKET"
+  | "ADMIN_BROADCAST"
+  | "COMPLIANCE_EXPORT_USER";
 
-export type AuditEntity = "club" | "user" | "post" | "event" | "gig" | "gig_application" | "settings" | "security";
+export type AuditEntity =
+  | "club"
+  | "user"
+  | "post"
+  | "event"
+  | "gig"
+  | "gig_application"
+  | "settings"
+  | "security"
+  | "admin_role"
+  | "moderation"
+  | "broadcast";
 
 export async function logAudit(params: {
   adminId: string;

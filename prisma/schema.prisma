@@ -31,6 +31,8 @@ model User {
   onboardingComplete     Boolean             @default(false)
   referralSource         String?
   adminLevel             String?
+  adminRoleTemplateId    String?
+  assignedModerationTickets ModerationTicket[] @relation("ModerationAssignee")
   announcements          Announcement[]
   auditLogs              AuditLog[]
   memberships            ClubMembership[]
@@ -52,6 +54,8 @@ model User {
   pendingLeadClub        Club?               @relation("PendingLeadApplicants", fields: [pendingLeadClubId], references: [id])
   referrer               User?               @relation("ReferralRelation", fields: [referredBy], references: [id])
   referrals              User[]              @relation("ReferralRelation")
+  adminRoleTemplate      AdminRoleTemplate?  @relation(fields: [adminRoleTemplateId], references: [id])
+  adminBroadcastsCreated AdminBroadcast[]
 
   @@map("users")
 }
@@ -269,6 +273,13 @@ model GigApplication {
   createdAt      DateTime @default(now())
   /// Short pitch (max 50 chars in API)
   message        String?
+  /// Work completion / submission summary from applicant
+  workDescription String?
+  /// Optional submission artifact
+  submissionFileUrl  String?
+  submissionFileName String?
+  submissionFileMime String?
+  submissionFileSize Int?
   applicantEmail String?
   /// Snapshot at apply time (shown to club header)
   applicantName  String?
@@ -319,17 +330,82 @@ model Share {
 }
 
 model PlatformSettings {
-  id                  String   @id @default("singleton")
-  siteName            String   @default("OCC")
-  announcementBanner  String?
-  announcementActive  Boolean  @default(false)
-  maintenanceMode     Boolean  @default(false)
-  registrationOpen    Boolean  @default(true)
-  landingHeroTitle    String?
-  landingHeroSubtitle String?
-  updatedAt           DateTime @updatedAt
+  id                   String   @id @default("singleton")
+  siteName             String   @default("OCC")
+  announcementBanner   String?
+  announcementActive   Boolean  @default(false)
+  maintenanceMode      Boolean  @default(false)
+  registrationOpen     Boolean  @default(true)
+  landingHeroTitle     String?
+  landingHeroSubtitle  String?
+  featureFlags         Json     @default("{}")
+  rateLimitPolicy      Json     @default("{}")
+  legalPrivacyHtml     String?
+  legalTermsHtml       String?
+  landingCmsExtra      Json     @default("{}")
+  updatedAt            DateTime @updatedAt
 
   @@map("platform_settings")
+}
+
+model AdminRoleTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String   @default("")
+  permissions Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+
+  @@map("admin_role_templates")
+}
+
+model ModerationTicket {
+  id           String    @id @default(cuid())
+  resourceType String
+  resourceId   String
+  status       String    @default("OPEN")
+  assigneeId   String?
+  dueAt        DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  assignee     User?     @relation("ModerationAssignee", fields: [assigneeId], references: [id])
+
+  @@unique([resourceType, resourceId])
+  @@index([status, dueAt])
+  @@map("moderation_tickets")
+}
+
+model AdminBroadcast {
+  id             String    @id @default(cuid())
+  title          String
+  message        String
+  audienceType   String    @default("all")
+  audienceFilter Json?
+  createdById    String
+  createdAt      DateTime  @default(now())
+  completedAt    DateTime?
+  recipientCount Int?
+  createdBy      User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@map("admin_broadcasts")
+}
+
+model AdminScheduledAnnouncement {
+  id        String   @id @default(cuid())
+  title     String   @default("")
+  body      String
+  startsAt  DateTime
+  endsAt    DateTime
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, startsAt, endsAt])
+  @@map("admin_scheduled_announcements")
 }
 
 model AuditLog {
@@ -393,4 +469,5 @@ enum ApprovalStatus {
 enum OtpPurpose {
   REGISTER
   RESET_PASSWORD
+  ADMIN_LOGIN
 }

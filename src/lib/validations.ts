@@ -52,7 +52,7 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-/** PATCH /api/profile — email and phone are not accepted (read-only on account). */
+/** PATCH /api/profile — email is read-only; phone may be omitted by read-only forms. */
 export const profileUpdateSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   phoneNumber: z
@@ -62,7 +62,8 @@ export const profileUpdateSchema = z.object({
     .transform((value) => {
       const digits = value.replace(/\D/g, "");
       return digits.length > 10 ? digits.slice(-10) : digits;
-    }),
+    })
+    .optional(),
   collegeName: z.string().min(2, "College name is required"),
   bio: z.string().max(280, "Bio must be 280 characters or less").optional().or(z.literal("")),
   city: z.string().max(80, "City is too long").optional().or(z.literal("")),
@@ -92,6 +93,11 @@ export const eventRegistrationSchema = z.object({
 export const gigApplicationSchema = z.object({
   gigId: z.string().cuid(),
   message: z.string().max(2000).optional().or(z.literal("")),
+  workDescription: z.string().max(5000).optional().or(z.literal("")),
+  submissionFileUrl: z.string().max(2048).optional(),
+  submissionFileName: z.string().max(260).optional(),
+  submissionFileMime: z.string().max(120).optional(),
+  submissionFileSize: z.number().int().min(1).max(30 * 1024 * 1024).optional(),
   applicantName: z.string().min(2).max(120).optional(),
   applicantPhone: z.string().min(10).max(20).optional(),
   applicantEmail: z.string().email().max(200).optional(),

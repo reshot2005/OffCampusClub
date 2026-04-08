@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { profileUpdateSchema } from "@/lib/validations";
+import { logSuspiciousAccess } from "@/lib/security";
 
 export async function GET() {
   const user = await getSessionUser();
@@ -22,15 +23,35 @@ export async function PATCH(req: NextRequest) {
 
   try {
     const body = await req.json();
+    if (body && typeof body === "object" && !Array.isArray(body)) {
+      const raw = body as Record<string, unknown>;
+      const attempted = ["role", "adminLevel", "adminRoleTemplateId", "approvalStatus"].filter(
+        (k) => k in raw,
+      );
+      if (attempted.length) {
+        const forwarded = req.headers.get("x-forwarded-for") || "";
+        const ip = forwarded.split(",")[0]?.trim() || "unknown";
+        await logSuspiciousAccess({
+          userId: user.id,
+          ipAddress: ip,
+          userAgent: req.headers.get("user-agent") || undefined,
+          path: "/api/profile",
+          reason: `Role/privilege field(s) present in profile update: ${attempted.join(", ")}`,
+          severity: "HIGH",
+        });
+      }
+    }
     const parsed = profileUpdateSchema.parse(body);
 
     const data: Prisma.UserUpdateInput = {
       fullName: parsed.fullName,
-      phoneNumber: parsed.phoneNumber,
       collegeName: parsed.collegeName,
       bio: parsed.bio === "" || parsed.bio === undefined ? null : parsed.bio,
       city: parsed.city === "" || parsed.city === undefined ? null : parsed.city,
     };
+    if (parsed.phoneNumber !== undefined) {
+      data.phoneNumber = parsed.phoneNumber;
+    }
 
     if (parsed.graduationYear !== undefined) {
       data.graduationYear = parsed.graduationYear;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -9,7 +9,7 @@ const patchSchema = z.object({
 });
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("clubs", "read");
   if (admin instanceof NextResponse) return admin;
 
   const club = await prisma.club.findUnique({
@@ -24,7 +24,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("clubs", "update");
   if (admin instanceof NextResponse) return admin;
 
   const body = patchSchema.parse(await req.json().catch(() => ({})));

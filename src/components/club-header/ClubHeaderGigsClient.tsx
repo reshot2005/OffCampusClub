@@ -11,6 +11,11 @@ type AppRow = {
   id: string;
   status: string;
   message: string | null;
+  workDescription: string | null;
+  submissionFileUrl: string | null;
+  submissionFileName: string | null;
+  submissionFileMime: string | null;
+  submissionFileSize: number | null;
   applicantName: string | null;
   applicantPhone: string | null;
   applicantEmail: string | null;
@@ -488,6 +493,35 @@ export function ClubHeaderGigsClient({ initialGigs }: { initialGigs: HeaderGigRo
                                   <span className="text-[10px] font-semibold uppercase text-white/35">About · </span>
                                   {a.message}
                                 </p>
+                              ) : null}
+                              {a.workDescription ? (
+                                <p className="mt-2 text-[13px] leading-relaxed text-white/60">
+                                  <span className="text-[10px] font-semibold uppercase text-white/35">Work summary · </span>
+                                  {a.workDescription}
+                                </p>
+                              ) : null}
+                              {a.submissionFileUrl ? (
+                                <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2">
+                                  <div className="min-w-0">
+                                    <p className="truncate text-xs font-medium text-white/80">
+                                      {a.submissionFileName || "submission-file"}
+                                    </p>
+                                    <p className="text-[10px] text-white/35">
+                                      {a.submissionFileMime || "document"}
+                                      {typeof a.submissionFileSize === "number"
+                                        ? ` · ${(a.submissionFileSize / (1024 * 1024)).toFixed(2)} MB`
+                                        : ""}
+                                    </p>
+                                  </div>
+                                  <a
+                                    href={a.submissionFileUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="shrink-0 rounded-md border border-white/20 px-2.5 py-1 text-[11px] font-semibold text-white/80 hover:bg-white/[0.07]"
+                                  >
+                                    Open file
+                                  </a>
+                                </div>
                               ) : null}
                               {a.status === "PENDING" ? (
                                 <div className="mt-4 flex flex-wrap gap-2">

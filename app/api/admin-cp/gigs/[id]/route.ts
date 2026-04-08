@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { logAudit } from "@/lib/audit";
 import { invalidateGigsListCache, broadcastEClubs } from "@/lib/gigs-realtime";
 
@@ -8,7 +8,7 @@ export async function PATCH(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
 ) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("gigs", "update");
   if (admin instanceof NextResponse) return admin;
 
   const { id } = await ctx.params;
@@ -48,7 +48,7 @@ export async function DELETE(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
 ) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("gigs", "delete");
   if (admin instanceof NextResponse) return admin;
 
   const { id } = await ctx.params;

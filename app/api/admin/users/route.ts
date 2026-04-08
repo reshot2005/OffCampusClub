@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { prisma } from "@/lib/prisma";
 import type { ApprovalStatus, UserRole } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("users", "read");
   if (admin instanceof NextResponse) return admin;
 
   const q = req.nextUrl.searchParams.get("q")?.trim() || "";

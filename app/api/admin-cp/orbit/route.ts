@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { logAudit } from "@/lib/audit";
 import { z } from "zod";
 
@@ -14,7 +14,7 @@ const createSchema = z.object({
 });
 
 export async function GET() {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("orbit", "read");
   if (admin instanceof NextResponse) return admin;
 
   const projects = await prisma.orbitProject.findMany({
@@ -31,7 +31,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("orbit", "create");
   if (admin instanceof NextResponse) return admin;
 
   const body = createSchema.parse(await req.json());

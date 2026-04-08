@@ -16,50 +16,70 @@ export function PostComposer({ clubId }: { clubId: string }) {
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [type, setType] = useState("post");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
+    if (files.length > 4) {
+      toast.error("You can upload up to 4 photos per post");
       return;
     }
 
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error("Image must be under 8MB");
-      return;
+    for (const file of files) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select only image files");
+        return;
+      }
+      if (file.size > 8 * 1024 * 1024) {
+        toast.error("Each image must be under 8MB");
+        return;
+      }
     }
 
-    // Show local preview immediately
-    const reader = new FileReader();
-    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    const previews = await Promise.all(
+      files.map(
+        (file) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => resolve((ev.target?.result as string) || "");
+            reader.readAsDataURL(file);
+          }),
+      ),
+    );
+    setImagePreviews(previews.filter(Boolean));
+    setImagePreview(previews[0] || null);
 
-    // Upload to server
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("purpose", "posts");
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = (await res.json()) as { url?: string; error?: string; detail?: string };
-      if (!res.ok) throw new Error(data.detail || data.error || "Upload failed");
-      if (!data.url || typeof data.url !== "string") {
-        throw new Error("Upload did not return an image URL");
+      const uploaded: string[] = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("purpose", "posts");
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = (await res.json()) as { url?: string; error?: string; detail?: string; warning?: string };
+        if (!res.ok) throw new Error(data.detail || data.error || "Upload failed");
+        if (!data.url || typeof data.url !== "string") {
+          throw new Error("Upload did not return an image URL");
+        }
+        uploaded.push(data.url);
+        if (data.warning) toast.warning(data.warning, { duration: 8000 });
       }
-      setImageUrl(data.url);
-      if (data.warning) {
-        toast.warning(data.warning, { duration: 8000 });
-      }
-      toast.success("Photo uploaded!");
+      setImageUrls(uploaded);
+      setImageUrl(uploaded[0] || "");
+      toast.success(`${uploaded.length} photo${uploaded.length > 1 ? "s" : ""} uploaded!`);
     } catch {
-      toast.error("Failed to upload photo");
+      toast.error("Failed to upload photos");
       setImagePreview(null);
+      setImagePreviews([]);
+      setImageUrls([]);
+      setImageUrl("");
     } finally {
       setUploading(false);
     }
@@ -67,7 +87,9 @@ export function PostComposer({ clubId }: { clubId: string }) {
 
   const removeImage = () => {
     setImageUrl("");
+    setImageUrls([]);
     setImagePreview(null);
+    setImagePreviews([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -90,6 +112,7 @@ export function PostComposer({ clubId }: { clubId: string }) {
           content,
           caption: content,
           imageUrl: imageUrl || undefined,
+          imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
           type,
         }),
       });
@@ -187,6 +210,7 @@ export function PostComposer({ clubId }: { clubId: string }) {
             ref={fileInputRef}
             type="file"
             accept="image/*"
+            multiple
             onChange={handleFileUpload}
             className="hidden"
           />
@@ -198,7 +222,7 @@ export function PostComposer({ clubId }: { clubId: string }) {
             className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#5227FF]/30 bg-[#5227FF]/5 px-6 py-3 text-sm font-semibold text-[#8C6DFD] hover:bg-[#5227FF]/10 hover:border-[#5227FF]/50 transition-all disabled:opacity-40"
           >
             <Upload className="h-4 w-4" />
-            {uploading ? "Uploading..." : "Upload Photo"}
+            {uploading ? "Uploading..." : "Upload Photos"}
           </motion.button>
 
           {/* OR paste URL */}
@@ -209,6 +233,10 @@ export function PostComposer({ clubId }: { clubId: string }) {
               onChange={(e) => {
                 setImageUrl(e.target.value);
                 if (e.target.value) setImagePreview(e.target.value);
+              if (e.target.value) {
+                setImageUrls([e.target.value]);
+                setImagePreviews([e.target.value]);
+              }
               }}
               placeholder="Or paste image URL"
               className="w-full rounded-xl border border-white/[0.08] bg-black/30 py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-[#5227FF]/50 transition-colors"
@@ -224,7 +252,7 @@ export function PostComposer({ clubId }: { clubId: string }) {
               loading ||
               uploading ||
               (!content.trim() && !imageUrl) ||
-              (Boolean(imagePreview) && !imageUrl.trim())
+              (Boolean(imagePreview) && imageUrls.length === 0 && !imageUrl.trim())
             }
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#5227FF] to-[#2B4BFF] px-8 py-3 text-sm font-semibold text-white shadow-[0_0_20px_rgba(82,39,255,0.4)] hover:shadow-[0_0_30px_rgba(82,39,255,0.6)] transition-shadow disabled:opacity-40 disabled:cursor-not-allowed"
           >
@@ -232,6 +260,9 @@ export function PostComposer({ clubId }: { clubId: string }) {
             {loading ? "Posting..." : "Publish"}
           </motion.button>
         </div>
+        {imagePreviews.length > 1 ? (
+          <p className="text-xs text-white/45">{imagePreviews.length} photos selected (carousel post)</p>
+        ) : null}
       </div>
     </motion.div>
   );

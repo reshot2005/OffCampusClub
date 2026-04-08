@@ -14,14 +14,15 @@ export default function GigApplyPage({ params }: Props) {
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [pitch, setPitch] = React.useState("");
-  const [files, setFiles] = React.useState<FileList | null>(null);
+  const [workDescription, setWorkDescription] = React.useState("");
+  const [file, setFile] = React.useState<File | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
 
-  const uploadOne = async (file: File): Promise<string> => {
+  const uploadOne = async (selectedFile: File): Promise<string> => {
     const form = new FormData();
-    form.append("file", file);
-    form.append("purpose", "gigs");
+    form.append("file", selectedFile);
+    form.append("purpose", "gig_submission");
     const res = await fetch("/api/upload", {
       method: "POST",
       body: form,
@@ -30,7 +31,7 @@ export default function GigApplyPage({ params }: Props) {
       | { url?: string; error?: string }
       | null;
     if (!res.ok || !data?.url) {
-      throw new Error(data?.error || "Image upload failed");
+      throw new Error(data?.error || "File upload failed");
     }
     return data.url;
   };
@@ -41,16 +42,7 @@ export default function GigApplyPage({ params }: Props) {
     setLoading(true);
 
     try {
-      const selected = files ? Array.from(files).slice(0, 3) : [];
-      const uploadedUrls: string[] = [];
-      for (const file of selected) {
-        uploadedUrls.push(await uploadOne(file));
-      }
-
-      const pitchTrimmed = pitch.trim();
-      const portfolioPart =
-        uploadedUrls.length > 0 ? ` Portfolio: ${uploadedUrls.join(", ")}` : "";
-      const message = `${pitchTrimmed}${portfolioPart}`.trim().slice(0, 2000);
+      const fileUrl = file ? await uploadOne(file) : undefined;
 
       const res = await fetch("/api/gigs", {
         method: "POST",
@@ -60,7 +52,12 @@ export default function GigApplyPage({ params }: Props) {
           applicantName: name.trim() || undefined,
           applicantEmail: email.trim() || undefined,
           applicantPhone: phone.trim() || undefined,
-          message: message || undefined,
+          message: pitch.trim() || undefined,
+          workDescription: workDescription.trim(),
+          submissionFileUrl: fileUrl,
+          submissionFileName: file?.name,
+          submissionFileMime: file?.type,
+          submissionFileSize: file?.size,
         }),
       });
 
@@ -84,8 +81,7 @@ export default function GigApplyPage({ params }: Props) {
         <p className="text-[11px] uppercase tracking-[0.45em] text-[#C9A96E]">Gig Submission</p>
         <h1 className="font-headline text-5xl text-[#F5F0E8]">Submit your gig application</h1>
         <p className="text-sm text-[#F5F0E8]/70">
-          Add your details and upload up to 3 portfolio pics. These are sent to the club header
-          for review.
+          Add your details, share your completion/work description, and optionally attach one supporting file for review.
         </p>
       </div>
 
@@ -122,16 +118,24 @@ export default function GigApplyPage({ params }: Props) {
           rows={4}
           className="w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 text-sm text-white placeholder:text-white/40"
         />
+        <textarea
+          placeholder="Work completion / execution description"
+          value={workDescription}
+          onChange={(e) => setWorkDescription(e.target.value)}
+          maxLength={1000}
+          required
+          rows={5}
+          className="w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 text-sm text-white placeholder:text-white/40"
+        />
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.2em] text-white/70">Portfolio pics</label>
+          <label className="text-xs uppercase tracking-[0.2em] text-white/70">Supporting file</label>
           <input
             type="file"
-            accept="image/*"
-            multiple
-            onChange={(e) => setFiles(e.target.files)}
+            accept=".pdf,.doc,.docx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 text-sm text-white file:mr-3 file:rounded-lg file:border-0 file:bg-[#5227FF] file:px-3 file:py-2 file:text-xs file:font-bold file:text-white"
           />
-          <p className="text-xs text-white/50">Up to 3 images, max 8MB each.</p>
+          <p className="text-xs text-white/50">Allowed: PDF, DOC, DOCX, PPT, PPTX. Max 30MB.</p>
         </div>
 
         {error ? <p className="text-sm text-red-300">{error}</p> : null}

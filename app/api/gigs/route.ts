@@ -64,6 +64,11 @@ export async function POST(req: NextRequest) {
   }
 
   const msg = parsed.message?.trim() || null;
+  const workDescription = parsed.workDescription?.trim() || null;
+  const submissionFileUrl = parsed.submissionFileUrl?.trim() || null;
+  const submissionFileName = parsed.submissionFileName?.trim() || null;
+  const submissionFileMime = parsed.submissionFileMime?.trim() || null;
+  const submissionFileSize = parsed.submissionFileSize ?? null;
   const applicantName = parsed.applicantName?.trim() || user.fullName;
   const applicantPhone = parsed.applicantPhone?.trim() || user.phoneNumber;
   const applicantEmail = parsed.applicantEmail?.trim() || user.email;
@@ -77,6 +82,11 @@ export async function POST(req: NextRequest) {
     },
     update: {
       message: msg,
+      workDescription,
+      submissionFileUrl,
+      submissionFileName,
+      submissionFileMime,
+      submissionFileSize,
       status: "PENDING",
       applicantName,
       applicantPhone,
@@ -86,6 +96,11 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       gigId,
       message: msg,
+      workDescription,
+      submissionFileUrl,
+      submissionFileName,
+      submissionFileMime,
+      submissionFileSize,
       status: "PENDING",
       applicantName,
       applicantPhone,

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const user = await requireAdminApi();
+  const user = await requireAdminPermission("approvals", "read");
   if (user instanceof NextResponse) return user;
 
   const rows = await prisma.user.findMany({

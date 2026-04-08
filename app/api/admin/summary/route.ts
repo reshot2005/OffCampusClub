@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/admin-api-guard";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminPermission("analytics", "read");
   if (admin instanceof NextResponse) return admin;
 
   const [totalUsers, activeClubs, pendingApprovals, totalPosts, totalReferrals, eventRegs] =

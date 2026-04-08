@@ -13,7 +13,22 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin-cp/settings").then((r) => r.json()).then((d) => { setSettings(d.settings); setLoading(false); }).catch(() => setLoading(false));
+    fetch("/api/admin-cp/settings")
+      .then((r) => r.json())
+      .then((d) => {
+        const s = d.settings;
+        setSettings({
+          siteName: s.siteName,
+          announcementBanner: s.announcementBanner,
+          announcementActive: s.announcementActive,
+          maintenanceMode: s.maintenanceMode,
+          registrationOpen: s.registrationOpen,
+          landingHeroTitle: s.landingHeroTitle,
+          landingHeroSubtitle: s.landingHeroSubtitle,
+        });
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   const save = async () => {

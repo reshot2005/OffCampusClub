@@ -50,12 +50,42 @@ export default async function AdminCPAnalyticsPage() {
     _count: { _all: true },
   });
 
+  const [funnelTotal, funnelOnboarded, funnelMembers, funnelPosters] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { onboardingComplete: true } }),
+    prisma.user.count({ where: { memberships: { some: {} } } }),
+    prisma.user.count({ where: { posts: { some: {} } } }),
+  ]);
+
+  const referralGroups = await prisma.referralStat.groupBy({
+    by: ["clubId"],
+    _count: { _all: true },
+    orderBy: { _count: { clubId: "desc" } },
+    take: 8,
+  });
+  const refClubIds = referralGroups.map((g) => g.clubId);
+  const refClubs = await prisma.club.findMany({
+    where: { id: { in: refClubIds } },
+    select: { id: true, name: true },
+  });
+  const refName = Object.fromEntries(refClubs.map((c) => [c.id, c.name]));
+
   return (
     <AnalyticsDashboard
       signupsByDay={Object.entries(signupsByDay).sort().map(([date, count]) => ({ date, count }))}
       postsByDay={Object.entries(postsByDay).sort().map(([date, count]) => ({ date, count }))}
       topClubs={topClubs.map((c) => ({ name: c.name, members: c._count.members }))}
       roleDistribution={roleDistribution.map((r) => ({ role: r.role, count: r._count._all }))}
+      funnel={{
+        totalUsers: funnelTotal,
+        onboardingComplete: funnelOnboarded,
+        withClubMembership: funnelMembers,
+        withPost: funnelPosters,
+      }}
+      referralByClub={referralGroups.map((g) => ({
+        clubName: refName[g.clubId] ?? g.clubId,
+        signups: g._count._all,
+      }))}
     />
   );
 }

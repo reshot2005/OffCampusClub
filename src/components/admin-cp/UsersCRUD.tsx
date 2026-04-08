@@ -10,15 +10,28 @@ import { pusherClient } from "@/lib/pusher";
 type User = {
   id: string; fullName: string; email: string; phoneNumber: string; collegeName: string;
   role: string; approvalStatus: string; suspended: boolean; adminLevel: string | null;
+  adminRoleTemplateId: string | null;
   createdAt: string; referralCode: string | null; clubs: string[];
 };
+
+type RoleTpl = { id: string; name: string; slug: string };
 
 export function UsersCRUD({ users: initial }: { users: User[] }) {
   const router = useRouter();
   const [users, setUsers] = useState(initial);
+  const [roleTemplates, setRoleTemplates] = useState<RoleTpl[]>([]);
   const [q, setQ] = useState("");
   const [roleF, setRoleF] = useState("");
   const [statusF, setStatusF] = useState("");
+
+  useEffect(() => {
+    fetch("/api/admin-cp/roles")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.templates) setRoleTemplates(d.templates.map((t: { id: string; name: string; slug: string }) => ({ id: t.id, name: t.name, slug: t.slug })));
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setUsers(initial);
@@ -61,7 +74,17 @@ export function UsersCRUD({ users: initial }: { users: User[] }) {
 
   const changeRole = async (u: User, role: string) => {
     const r = await action(u.id, { role }, `Role changed to ${role}`);
-    if (r) setUsers((p) => p.map((x) => x.id === u.id ? { ...x, role } : x));
+    if (r) setUsers((p) => p.map((x) => (x.id === u.id ? { ...x, role } : x)));
+  };
+
+  const changeAdminLevel = async (u: User, adminLevel: string | null) => {
+    const r = await action(u.id, { adminLevel }, "Admin level updated");
+    if (r) setUsers((p) => p.map((x) => (x.id === u.id ? { ...x, adminLevel } : x)));
+  };
+
+  const changeAdminTemplate = async (u: User, adminRoleTemplateId: string | null) => {
+    const r = await action(u.id, { adminRoleTemplateId }, "Permission template updated");
+    if (r) setUsers((p) => p.map((x) => (x.id === u.id ? { ...x, adminRoleTemplateId } : x)));
   };
 
   const resetPw = async (u: User) => {
@@ -146,6 +169,32 @@ export function UsersCRUD({ users: initial }: { users: User[] }) {
                     <option value="CLUB_HEADER">Club Header</option>
                     <option value="ADMIN">Admin</option>
                   </select>
+                  {u.role === "ADMIN" && (
+                    <div className="mt-2 flex flex-col gap-1.5">
+                      <select
+                        value={u.adminLevel ?? "SUPER_ADMIN"}
+                        onChange={(e) =>
+                          changeAdminLevel(u, e.target.value === "SUPER_ADMIN" ? "SUPER_ADMIN" : "MODERATOR")
+                        }
+                        className="rounded-lg border border-[#5227FF]/30 bg-[#5227FF]/10 px-2 py-1 text-[10px] text-white outline-none max-w-[11rem]"
+                      >
+                        <option value="SUPER_ADMIN">Super admin</option>
+                        <option value="MODERATOR">Moderator</option>
+                      </select>
+                      <select
+                        value={u.adminRoleTemplateId ?? ""}
+                        onChange={(e) => changeAdminTemplate(u, e.target.value || null)}
+                        className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-[10px] text-white outline-none max-w-[11rem]"
+                      >
+                        <option value="">Template: default (level)</option>
+                        {roleTemplates.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-xs text-white/40">{u.clubs.join(", ") || "—"}</td>
                 <td className="px-4 py-3">

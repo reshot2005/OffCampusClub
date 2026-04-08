@@ -42,7 +42,6 @@ export async function POST(req: NextRequest) {
       valid: true,
       club: { id: club.id, name: club.name, slug: club.slug, icon: club.icon },
       headerName: header.fullName,
-      headerId: header.id,
     });
   } catch (e) {
     console.error("[referral/validate]", e);

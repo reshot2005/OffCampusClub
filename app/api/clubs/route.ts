@@ -19,6 +19,17 @@ export async function GET(req: Request) {
           { description: { contains: query, mode: 'insensitive' } }
         ]
       },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        icon: true,
+        description: true,
+        theme: true,
+        coverImage: true,
+        memberCount: true,
+        createdAt: true,
+      },
       orderBy: { createdAt: "asc" },
     }),
   );
