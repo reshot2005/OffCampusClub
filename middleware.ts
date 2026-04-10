@@ -294,8 +294,8 @@ export const config = {
     // Must match default NEXT_PUBLIC_OCC_STAFF_PREFIX; update both if you change the env prefix.
     "/k9xm2p7qv4nw8-stf",
     "/k9xm2p7qv4nw8-stf/:path*",
-    `${ADMIN_CP_PREFIX}`,
-    `${ADMIN_CP_PREFIX}/:path*`,
+    "/k9xm2p7qv4nw8-admin-control-panel",
+    "/k9xm2p7qv4nw8-admin-control-panel/:path*",
     "/api/admin/:path*",
     "/api/admin-cp/:path*",
     "/admin-control-panel-internal",

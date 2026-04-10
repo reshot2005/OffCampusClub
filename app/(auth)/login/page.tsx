@@ -3,8 +3,6 @@
 import React, { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
-import { Loader2 } from "lucide-react";
-import Link from "next/link";
 import { STAFF_PUBLIC_PREFIX } from "@/lib/staff-paths";
 import { Interactive3DModel } from "@/app/components/auth/Interactive3DModel";
 
@@ -206,13 +204,13 @@ function LoginPageInner() {
         className="w-full lg:w-1/2 flex flex-col justify-center px-8 md:px-16 lg:px-24 bg-white"
       >
         <div className="mb-6">
-          <Link
+          <a
             href="/"
             className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
           >
             <span aria-hidden>←</span>
             Back to landing
-          </Link>
+          </a>
         </div>
 
         {/* Logo */}
@@ -386,7 +384,7 @@ function LoginPageInner() {
           >
             {loading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 Logging in...
               </>
             ) : (
@@ -397,9 +395,9 @@ function LoginPageInner() {
           {/* Sign Up Link */}
           <p className="text-center text-gray-600 text-sm">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+            <a href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
               Sign up
-            </Link>
+            </a>
           </p>
         </motion.form>
         ) : (

@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { gigWhereNotLegacyDummy } from "@/lib/legacyDummyGigs";
 import {
@@ -8,9 +9,8 @@ import {
 } from "@/lib/postImageUrl";
 import { displayClubMembers, displayPostLikes, formatSocialCount } from "@/lib/socialDisplay";
 import { OCCTrendingClubs } from "@/components/occ-dashboard/OCCStoriesRow";
-import { OCCPostCard } from "@/components/occ-dashboard/OCCPostCard";
 import { OCCRightRail } from "@/components/occ-dashboard/OCCRightRail";
-import { SlidersHorizontal } from "lucide-react";
+import { RealtimeFeedTabs } from "@/components/dashboard/RealtimeFeedTabs";
 
 function getTimeAgo(date: Date): string {
   const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
@@ -29,10 +29,18 @@ export default async function DashboardPage() {
   const user = await requireUser();
 
   let clubs: Awaited<ReturnType<typeof prisma.club.findMany>> = [];
-  let events: Awaited<ReturnType<typeof prisma.event.findMany>> = [];
-  let posts: Awaited<ReturnType<typeof prisma.post.findMany>> = [];
+  let events: Array<
+    Prisma.EventGetPayload<{
+      include: { club: true };
+    }>
+  > = [];
+  let posts: Array<
+    Prisma.PostGetPayload<{
+      include: { user: true; club: true; _count: { select: { comments: true } } };
+    }>
+  > = [];
   let gigs: Awaited<ReturnType<typeof prisma.gig.findMany>> = [];
-  let memberships: Awaited<ReturnType<typeof prisma.clubMembership.findMany>> = [];
+  let memberships: Array<{ clubId: string }> = [];
 
   try {
     [clubs, events, posts, gigs, memberships] = await Promise.all([
@@ -128,34 +136,7 @@ export default async function DashboardPage() {
         {/* REFINED PREMIUM TRENDING CLUBS */}
         <OCCTrendingClubs clubs={trendingClubs} />
 
-        <div className="flex items-center justify-between mb-6 sm:mb-8 pb-3 sm:pb-4 border-b border-black/5 mt-2 sm:mt-4 gap-4 px-4 sm:px-0">
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 lg:pb-0">
-            {["For You", "Following", "All Clubs"].map((tab, i) => (
-              <button 
-                key={tab} 
-                className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-[13px] font-medium tracking-wide uppercase transition-all shrink-0 ${
-                  i === 0 
-                    ? "bg-black text-white shadow-xl shadow-black/10" 
-                    : "text-black/30 hover:text-black/60 hover:bg-black/5"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-          
-          <button className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-black/5 bg-white text-[10px] sm:text-[12px] font-medium uppercase tracking-widest text-black/60 hover:bg-black/5 transition-all shadow-sm shrink-0">
-            <SlidersHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline">Latest</span>
-          </button>
-        </div>
-
-
-        <div className="flex flex-col gap-6">
-          {feedPosts.map((p) => (
-            <OCCPostCard key={p.id} post={p} currentUserId={user.id} />
-          ))}
-        </div>
+        <RealtimeFeedTabs initialPosts={feedPosts} currentUserId={user.id} />
       </div>
 
       <div className="hidden lg:block w-[min(260px,24vw)] xl:w-[280px] 2xl:w-[300px] shrink-0 space-y-8 xl:space-y-10 min-w-0">

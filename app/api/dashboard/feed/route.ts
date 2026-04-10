@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
         ? {}
         : { OR: [{ user: { role: "CLUB_HEADER" as const } }, { imageUrl: { not: "" } }] };
 
-  let rows: Awaited<ReturnType<typeof prisma.post.findMany>>;
+  let rows: Array<Prisma.PostGetPayload<{ select: typeof select }>>;
   try {
     rows = await prisma.post.findMany({
       where: whereWithHidden,

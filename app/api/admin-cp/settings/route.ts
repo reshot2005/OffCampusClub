@@ -13,11 +13,11 @@ const settingsPatchSchema = z
     registrationOpen: z.boolean().optional(),
     landingHeroTitle: z.string().max(180).optional(),
     landingHeroSubtitle: z.string().max(600).optional(),
-    featureFlags: z.record(z.unknown()).optional(),
-    rateLimitPolicy: z.record(z.unknown()).optional(),
+    featureFlags: z.record(z.string(), z.unknown()).optional(),
+    rateLimitPolicy: z.record(z.string(), z.unknown()).optional(),
     legalPrivacyHtml: z.string().max(60_000).optional(),
     legalTermsHtml: z.string().max(60_000).optional(),
-    landingCmsExtra: z.record(z.unknown()).optional(),
+    landingCmsExtra: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();
 
