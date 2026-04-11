@@ -22,7 +22,7 @@ export function ApplyGigButton({
         if (applied || loading) return;
         setLoading(true);
         try {
-          router.push(`/gigs/${gigId}/apply`);
+          router.push("/football");
           window.setTimeout(() => setLoading(false), 2500);
         } catch {
           setLoading(false);

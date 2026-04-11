@@ -21,6 +21,13 @@ export async function PATCH(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json().catch(() => ({}));
+  if (body.id && typeof body.id === "string") {
+    await prisma.notification.updateMany({
+      where: { userId: user.id, id: body.id },
+      data: { read: true },
+    });
+    return NextResponse.json({ success: true });
+  }
   if (body.markAllRead) {
     await prisma.notification.updateMany({
       where: { userId: user.id, read: false },

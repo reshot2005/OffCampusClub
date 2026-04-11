@@ -142,15 +142,19 @@ export default async function DashboardPage() {
       <div className="hidden lg:block w-[min(260px,24vw)] xl:w-[280px] 2xl:w-[300px] shrink-0 space-y-8 xl:space-y-10 min-w-0">
         <OCCRightRail 
           currentUserId={user.id}
-          events={events.map(e => {
-             return {
-              id: e.id,
-              title: e.title,
-              when: new Date(e.date).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
-              club: e.club.name,
-              imageUrl: resolvePostImageUrlForFeed(e.imageUrl, e.club.name),
-             };
-          })}
+          events={events.map((e) => ({
+            id: e.id,
+            title: e.title,
+            when: new Date(e.date).toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            }),
+            club: e.club.name,
+            clubSlug: e.club.slug,
+            imageUrl: resolvePostImageUrlForFeed(e.imageUrl, e.club.name),
+          }))}
           trending={trendingClubs.map(c => ({
             id: c.id,
             slug: c.slug,

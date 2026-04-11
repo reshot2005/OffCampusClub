@@ -3,10 +3,12 @@
 import { ChevronLeft, ChevronRight, Plus, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { pusherClient } from "@/lib/pusher";
 import { displayClubMembers, formatSocialCount } from "@/lib/socialDisplay";
 import { cn } from "@/app/components/ui/utils";
+import { clubDiveInHref } from "@/lib/clubDiveInHref";
 
 export type OCCTrendingClub = {
   id: string;
@@ -18,6 +20,7 @@ export type OCCTrendingClub = {
 };
 
 export function OCCTrendingClubs({ clubs }: { clubs: OCCTrendingClub[] }) {
+  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(true);
@@ -130,7 +133,7 @@ export function OCCTrendingClubs({ clubs }: { clubs: OCCTrendingClub[] }) {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: idx * 0.05 }}
               className={`relative flex-shrink-0 group rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden bg-slate-50 cursor-pointer shadow-[0_10px_40px_rgb(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgb(0,0,0,0.15)] transition-all duration-700 ${cardStyles[idx % cardStyles.length]}`}
-              onClick={() => window.location.href = `/clubs/${club.slug}`}
+              onClick={() => router.push(clubDiveInHref(club.slug))}
             >
               <img
                 src={club.imageUrl}

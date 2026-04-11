@@ -1,3 +1,4 @@
+import { withSentryConfig } from "@sentry/nextjs";
 import { fileURLToPath } from "node:url";
 import bundleAnalyzer from "@next/bundle-analyzer";
 
@@ -31,6 +32,13 @@ const nextConfig = {
       : {}),
   },
 
+  async redirects() {
+    return [
+      { source: "/sports", destination: "/football", permanent: false },
+      { source: "/sports/", destination: "/football", permanent: false },
+    ];
+  },
+
   async rewrites() {
     return [
       { source: `${staffPrefix}/gate`, destination: "/staff-gate-internal" },
@@ -60,6 +68,7 @@ const nextConfig = {
   },
 
   experimental: {
+    instrumentationHook: true,
     typedRoutes: false,
     optimizePackageImports: ["framer-motion", "lucide-react", "date-fns"],
   },
@@ -109,4 +118,40 @@ const nextConfig = {
   },
 };
 
-export default withBundleAnalyzer(nextConfig);
+export default withSentryConfig(withBundleAnalyzer(nextConfig), {
+  // For all available options, see:
+  // https://www.npmjs.com/package/@sentry/webpack-plugin#options
+
+  org: "akshara-enterprises",
+
+  project: "javascript-nextjs",
+
+  // Only print logs for uploading source maps in CI
+  silent: !process.env.CI,
+
+  // For all available options, see:
+  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+
+  // Upload a larger set of source maps for prettier stack traces (increases build time)
+  widenClientFileUpload: true,
+
+  // Uncomment to route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
+  // This can increase your server load as well as your hosting bill.
+  // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
+  // side errors will fail.
+  // tunnelRoute: "/monitoring",
+
+  webpack: {
+    // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
+    // See the following for more information:
+    // https://docs.sentry.io/product/crons/
+    // https://vercel.com/docs/cron-jobs
+    automaticVercelMonitors: true,
+
+    // Tree-shaking options for reducing bundle size
+    treeshake: {
+      // Automatically tree-shake Sentry logger statements to reduce bundle size
+      removeDebugLogging: true,
+    },
+  },
+});

@@ -259,10 +259,10 @@ export function OCCSidebar({ activePath: _activePath }: { activePath: string }) 
                 href="/profile"
                 prefetch
                 onClick={() => setMoreOpen(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-medium text-white hover:bg-white/[0.06]"
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold !text-white hover:bg-white/[0.06]"
               >
-                <UserRound className="h-4 w-4 shrink-0 text-white/80" strokeWidth={1.75} />
-                Profile &amp; edit
+                <UserRound className="h-4 w-4 shrink-0 !text-white/90" strokeWidth={1.75} aria-hidden />
+                Manage Profile
               </Link>
               <button
                 type="button"
@@ -270,9 +270,9 @@ export function OCCSidebar({ activePath: _activePath }: { activePath: string }) 
                   setMoreOpen(false);
                   logout();
                 }}
-                className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] font-medium text-red-400/90 hover:bg-red-500/10"
+                className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] font-semibold !text-red-400 hover:bg-red-500/10"
               >
-                <LogOut className="h-4 w-4" strokeWidth={1.75} />
+                <LogOut className="h-4 w-4 shrink-0 !text-red-400" strokeWidth={1.75} aria-hidden />
                 Log out
               </button>
             </motion.div>

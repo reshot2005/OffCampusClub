@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Users, ChevronRight, CheckCircle2 } from "lucide-react";
+import { clubDiveInHref } from "@/lib/clubDiveInHref";
 
 const clubImages: Record<string, string> = {
   amber: "/clubs/biker.png",
@@ -20,14 +21,6 @@ const themeColors: Record<string, string> = {
   blue: "#5227FF",
   charcoal: "#64748B",
   rose: "#FF6B6B",
-};
-
-const CUSTOM_ROUTES: Record<string, string> = {
-  music: "/music",
-  bikers: "/bikers",
-  photography: "/photography",
-  sports: "/sports",
-  fitness: "/fitness",
 };
 
 export function ClubCard({
@@ -88,7 +81,7 @@ export function ClubCard({
 
           <div className="flex items-center justify-between pt-1 sm:pt-2">
             <Link
-              href={CUSTOM_ROUTES[club.slug] || `/clubs/${club.slug}`}
+              href={clubDiveInHref(club.slug)}
               className="group/link flex items-center gap-2 text-[10px] sm:text-[12px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] text-white/60 transition-all hover:text-white"
             >
               <span className="border-b border-white/20 group-hover:border-white transition-all">Dive In</span>
