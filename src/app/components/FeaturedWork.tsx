@@ -201,7 +201,7 @@ export function FeaturedWork({ theme, userId }: { theme: "dark" | "light"; userI
       <div className="mx-auto grid w-full max-w-[90rem] grid-cols-1 gap-10 md:grid-cols-2 md:gap-x-12 md:gap-y-20 lg:grid-cols-3">
         {clubs.map((club, index) => {
           const opensBikersRide = club.title === "Bikers";
-          const opensFootball = club.title === "Football & Sports";
+          const opensFootball = club.title === "Sports & Football";
           const opensMusic = club.title === "Music";
           const opensPhotography = club.title === "Photography";
           const opensFitness = club.title === "Fitness";
