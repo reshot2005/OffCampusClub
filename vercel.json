@@ -11,7 +11,19 @@
       ]
     },
     {
-      "source": "/(.env.*|.git(.*)?|package\\.json|package-lock\\.json|pnpm-lock\\.yaml)",
+      "source": "/(.env.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    },
+    {
+      "source": "/.git/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    },
+    {
+      "source": "/(package.json|package-lock.json|pnpm-lock.yaml)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]
