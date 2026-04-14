@@ -2,7 +2,7 @@ import { framesPublicPath } from "../../../config/framesAssetBase";
 
 export const PHOTO_TOTAL_FRAMES = 546;
 export const PHOTO_FRAMES_PATH = framesPublicPath("/photography-frames/");
-export const PHOTO_SCROLL_HEIGHT_VH = 700;
+export const PHOTO_SCROLL_HEIGHT_VH = 950;
 
 export const PC = {
   bg: "#0a0a0a",

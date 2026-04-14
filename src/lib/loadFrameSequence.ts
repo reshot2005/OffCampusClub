@@ -180,8 +180,8 @@ function scheduleDeferredDecodePump(seqKey: string) {
       return;
     }
 
-    // Decode a small batch each tick to avoid CPU spikes.
-    const batchSize = 2;
+    // Decode a larger batch each tick to keep up with fast scrolls.
+    const batchSize = 6;
     const batch = pickPriorityBatch(seqKey, q, batchSize);
     for (const img of batch) {
       if (!img.complete || !img.naturalWidth) continue;

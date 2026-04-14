@@ -2,11 +2,12 @@ import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import { stickySectionScrollProgress } from "../lib/frameImage";
 
 /** Time-based smoothing for stable scroll-cinema across devices (30/60/120Hz). */
-const EASE = 0.045;
-const SLACK = 2;
-const SCROLL_VEL_GAIN = 24;
-const VEL_DECAY = 0.9;
-const MAX_NORM = 1;
+const EASE = 0.015; // Further softened for deep 2-3s glide
+const SLACK = 0.25; // Minimum snap-prevention
+const SCROLL_VEL_GAIN = 38; // Even more kinetic secondary effects
+const VEL_DECAY = 0.952; // Longer momentum persistence
+const MAX_NORM = 1.35; // Wider intensity range
+
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
@@ -134,9 +135,9 @@ export function usePhotographyPhysics(
         };
 
         const shouldEmit =
-          ts - lastEmitTs.current >= 1000 / 50 || // cap React updates ~50fps for overlays
-          Math.abs(physicsFrame.current - lastEmittedFrame.current) >= 0.35 ||
-          Math.abs(nextProgress - lastEmittedProgress.current) >= 0.002;
+          ts - lastEmitTs.current >= 1000 / 75 || // Cap React updates ~75fps
+          Math.abs(physicsFrame.current - lastEmittedFrame.current) >= 0.15 ||
+          Math.abs(nextProgress - lastEmittedProgress.current) >= 0.0008;
 
         if (shouldEmit) {
           lastEmitTs.current = ts;
