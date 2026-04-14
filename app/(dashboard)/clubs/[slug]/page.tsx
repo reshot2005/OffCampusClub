@@ -78,7 +78,14 @@ export default async function ClubDetailPage({
     notFound();
   }
 
-  const joined = club.members.some((membership) => membership.userId === user.id);
+  const joined = await prisma.clubMember.findUnique({
+    where: {
+      userId_clubId: {
+        userId: user.id,
+        clubId: club.id,
+      },
+    },
+  }).then(Boolean);
   const gigs = await prisma.gig.findMany({
     where: {
       AND: [
