@@ -68,7 +68,7 @@ export async function POST(_req: NextRequest, { params }: { params: { slug: stri
   });
 
   // Track in ActivityEvent for admins
-  await prisma.activityEvent.create({
+  await (prisma as any).activityEvent.create({
     data: {
       actorUserId: user.id,
       actorName: user.fullName || "Unknown User",
@@ -78,7 +78,7 @@ export async function POST(_req: NextRequest, { params }: { params: { slug: stri
       entityType: "CLUB",
       entityId: club.id,
       summary: `${user.fullName} left the club ${club.name}`,
-    }
+    } as any
   });
 
   return NextResponse.json({

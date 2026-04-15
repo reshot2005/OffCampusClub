@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Incomplete answers" }, { status: 400 });
     }
 
-    await prisma.clubOnboarding.upsert({
+    await (prisma.clubOnboarding as any).upsert({
       where: {
         userId_clubSlug: {
           userId: user.id,

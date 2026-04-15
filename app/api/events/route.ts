@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  await prisma.activityEvent.create({
+  await (prisma as any).activityEvent.create({
     data: {
       actorUserId: user.id,
       actorName: user.fullName || "Unknown User",
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       entityType: "EVENT",
       entityId: eventId,
       summary: `${user.fullName || "A user"} registered for event '${event.title}'`,
-    }
+    } as any
   });
 
   return NextResponse.json({ success: true });
@@ -85,7 +85,7 @@ export async function DELETE(req: NextRequest) {
     },
   });
 
-  await prisma.activityEvent.create({
+  await (prisma as any).activityEvent.create({
     data: {
       actorUserId: user.id,
       actorName: user.fullName || "Unknown User",
@@ -95,7 +95,7 @@ export async function DELETE(req: NextRequest) {
       entityType: "EVENT",
       entityId: eventId,
       summary: `${user.fullName || "A user"} unregistered from event '${event.title}'`,
-    }
+    } as any
   });
 
   return NextResponse.json({ success: true });

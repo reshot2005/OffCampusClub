@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       : {}),
   };
 
-  const rows = await prisma.activityEvent.findMany({
+  const rows = await (prisma as any).activityEvent.findMany({
     where,
     take: take + 1,
     orderBy: { createdAt: "desc" },
