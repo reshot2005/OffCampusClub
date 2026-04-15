@@ -287,7 +287,7 @@ export async function GET(req: NextRequest) {
 
   // === POLL MODE: Store token server-side, let app poll for it ===
   if (isPollMode && pollKey) {
-    storeOAuthToken(pollKey, token, user.email);
+    await storeOAuthToken(pollKey, token, user.email);
     console.log(`[GOOGLE CALLBACK] Token stored for polling, key: ${pollKey}`);
 
     // Check if the user is on mobile by looking at the user agent or if they requested OCC://

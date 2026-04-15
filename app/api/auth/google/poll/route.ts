@@ -8,15 +8,12 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Missing key" }, { status: 400 });
     }
 
-    const result = getOAuthToken(key);
+    // Now async as it hits the database
+    const result = await getOAuthToken(key);
 
     if (!result) {
-        // Not ready yet — app should keep polling
+        // Not ready yet or consumed — app should keep polling or will timeout
         return NextResponse.json({ status: "pending" }, { status: 202 });
-    }
-
-    if ("expired" in result) {
-        return NextResponse.json({ error: "Session expired" }, { status: 410 });
     }
 
     // Success — return token

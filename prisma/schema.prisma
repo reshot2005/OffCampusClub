@@ -509,3 +509,12 @@ enum OtpPurpose {
   RESET_PASSWORD
   ADMIN_LOGIN
 }
+
+model OAuthPoll {
+  key       String   @id
+  token     String
+  email     String
+  createdAt DateTime @default(now())
+
+  @@map("oauth_polls")
+}

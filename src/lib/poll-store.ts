@@ -1,34 +1,48 @@
-// In-memory store for OAuth tokens (keyed by pollKey)
-const tokenStore = new Map<string, { token: string; email: string; createdAt: number }>();
+import { prisma } from "./prisma";
 
-// Clean up tokens older than 10 minutes
-function cleanupOldTokens() {
-    const now = Date.now();
-    for (const [key, value] of tokenStore.entries()) {
-        if (now - value.createdAt > 10 * 60 * 1000) {
-            tokenStore.delete(key);
-        }
-    }
+/**
+ * Stores an OAuth token in the database so it can be retrieved by the mobile app 
+ * across different serverless instances.
+ */
+export async function storeOAuthToken(key: string, token: string, email: string) {
+  try {
+    await prisma.oAuthPoll.upsert({
+      where: { key },
+      create: { key, token, email },
+      update: { token, email, createdAt: new Date() },
+    });
+    
+    // Cleanup old sessions (older than 10 minutes) to keep the table small
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    prisma.oAuthPoll.deleteMany({
+      where: { createdAt: { lt: tenMinutesAgo } }
+    }).catch(e => console.error("[poll-store] cleanup error:", e));
+
+  } catch (e) {
+    console.error(`[poll-store] Failed to store token for key ${key}:`, e);
+  }
 }
 
-export function storeOAuthToken(pollKey: string, token: string, email: string) {
-    cleanupOldTokens();
-    tokenStore.set(pollKey, { token, email, createdAt: Date.now() });
-    console.log(`[PollStore] Token cached for key: ${pollKey}, email: ${email}`);
-}
+/**
+ * Retrieves and DELETES an OAuth token from the database.
+ * Deletion ensures the token is only consumed once for security.
+ */
+export async function getOAuthToken(key: string | null) {
+  if (!key) return null;
 
-export function getOAuthToken(pollKey: string) {
-    const entry = tokenStore.get(pollKey);
+  try {
+    const record = await prisma.oAuthPoll.findUnique({
+      where: { key }
+    });
 
-    if (!entry) return null;
-
-    // Check expiration (10 min)
-    if (Date.now() - entry.createdAt > 10 * 60 * 1000) {
-        tokenStore.delete(pollKey);
-        return { expired: true };
+    if (record) {
+      // Consume the token immediately
+      await prisma.oAuthPoll.delete({ where: { key } }).catch(() => {});
+      return { token: record.token, email: record.email };
     }
+  } catch (e) {
+    console.error(`[poll-store] Failed to retrieve token for key ${key}:`, e);
+  }
 
-    // Success - consume the token
-    tokenStore.delete(pollKey);
-    return { token: entry.token };
+  return null;
 }
