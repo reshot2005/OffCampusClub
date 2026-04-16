@@ -30,9 +30,9 @@ export function AuthCinematicShell({
           cursorSize={reduceMotion ? 0 : 60}
           isViscous
           viscous={83}
-          iterationsViscous={28}
-          iterationsPoisson={56}
-          resolution={0.55}
+          iterationsViscous={14}
+          iterationsPoisson={28}
+          resolution={0.5}
           isBounce={false}
           autoDemo={!reduceMotion}
           autoSpeed={0.45}

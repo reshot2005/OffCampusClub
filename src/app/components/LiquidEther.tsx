@@ -7,8 +7,8 @@ export default function LiquidEther({
   cursorSize = 50,
   isViscous = false,
   viscous = 30,
-  iterationsViscous = 32,
-  iterationsPoisson = 32,
+  iterationsViscous = 16,
+  iterationsPoisson = 24,
   dt = 0.014,
   BFECC = true,
   resolution = 0.5,
@@ -23,9 +23,9 @@ export default function LiquidEther({
   autoResumeDelay = 1000,
   autoRampDuration = 0.6,
   /** Cap devicePixelRatio for the WebGL canvas (lower = faster, slightly softer). */
-  maxPixelRatio = 2,
+  maxPixelRatio = 1.6,
   /** Multisampling is expensive for fullscreen fluid; prefer false for 60fps. */
-  antialias = true,
+  antialias = false,
 }: {
   mouseForce?: number;
   cursorSize?: number;

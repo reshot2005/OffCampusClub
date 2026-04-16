@@ -15,9 +15,9 @@ export function DashboardCinematicBackground() {
         cursorSize={reduceMotion ? 0 : 50}
         isViscous
         viscous={83}
-        iterationsViscous={28}
-        iterationsPoisson={56}
-        resolution={0.6}
+        iterationsViscous={14}
+        iterationsPoisson={28}
+        resolution={0.5}
         isBounce={false}
         autoDemo={!reduceMotion}
         autoSpeed={0.42}

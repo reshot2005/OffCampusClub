@@ -27,10 +27,11 @@ export default function HomePage({ userId }: { userId?: string }) {
       if (!mounted) return;
 
       const lenis = new Lenis({
-        duration: 1.05,
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         smoothWheel: true,
-        wheelMultiplier: 0.95,
-        touchMultiplier: 1.1,
+        wheelMultiplier: 1.0,
+        touchMultiplier: 1.5,
         infinite: false,
       });
 
