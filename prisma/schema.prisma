@@ -508,6 +508,7 @@ enum OtpPurpose {
   REGISTER
   RESET_PASSWORD
   ADMIN_LOGIN
+  EXPORT
 }
 
 model OAuthPoll {

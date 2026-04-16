@@ -106,6 +106,7 @@ export async function POST(req: NextRequest) {
         approvalStatus: user.approvalStatus as "PENDING" | "APPROVED" | "REJECTED",
         suspended: user.suspended,
         onboardingComplete: user.onboardingComplete,
+        hasPhone: !!(user.phoneNumber && user.phoneNumber.replace(/\D/g, "").length === 10),
       },
       { expiresIn: `${sessionDays}d` },
     );

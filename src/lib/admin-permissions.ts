@@ -50,7 +50,7 @@ const SUPER_ADMIN_PERMISSIONS: Record<AdminModule, AdminAction[]> = {
   audit: ["read"],
   security: ["read", "resolve"],
   settings: ["read", "update"],
-  export: ["csv_users", "csv_posts", "csv_clubs", "csv_events", "csv_gigs"],
+  export: ["read", "csv_users", "csv_posts", "csv_clubs", "csv_events", "csv_gigs"],
   analytics: ["read"],
   roles: ["read", "create", "update", "delete"],
   moderation: ["read", "update", "resolve", "approve", "reject"],

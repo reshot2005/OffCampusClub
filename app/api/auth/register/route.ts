@@ -127,6 +127,7 @@ export async function POST(req: NextRequest) {
       approvalStatus: "APPROVED",
       suspended: false,
       onboardingComplete: true,
+      hasPhone: !!(validated.phoneNumber && validated.phoneNumber.replace(/\D/g, "").length === 10),
     });
     const response = NextResponse.json({ success: true, user }, { status: 201 });
     response.cookies.set("occ-token", token, authCookieOptions);

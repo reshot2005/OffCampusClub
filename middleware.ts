@@ -163,8 +163,8 @@ export async function middleware(req: NextRequest) {
         response.cookies.delete("occ-token");
         return response;
       }
-      // Only allow access to onboarding if they haven't finished it
-      if (payload.onboardingComplete === true) {
+      // Only allow access to onboarding if they haven't finished it or lack a phone
+      if (payload.onboardingComplete === true && payload.hasPhone === true) {
         return NextResponse.redirect(new URL("/dashboard", req.url));
       }
       return NextResponse.next();
@@ -229,7 +229,7 @@ export async function middleware(req: NextRequest) {
       }
 
       if (
-        payload.onboardingComplete === false &&
+        (payload.onboardingComplete === false || payload.hasPhone === false) &&
         !isOnboardingPath
       ) {
         return NextResponse.redirect(new URL("/onboarding", req.url));

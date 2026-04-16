@@ -23,7 +23,7 @@ function FootballLoadingScreen({ progress, loaded }: { progress: number; loaded:
             transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
             className="mb-6 text-5xl"
           >
-            FB
+
           </motion.div>
           <h1 className="font-headline mb-8 text-4xl tracking-[0.3em] md:text-5xl" style={{ color: FC.text }}>
             LOADING SPORTS & FOOTBALL
@@ -167,14 +167,16 @@ function StadiumSection() {
               <p className="mt-5 max-w-[400px] text-sm leading-[1.8]" style={{ color: "#8A8E9B" }}>
                 The sports most frequently referred to as simply football are Association Football, known in some countries as soccer.
               </p>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="mt-6 rounded-sm px-8 py-3 text-[11px] font-bold tracking-[0.25em] uppercase transition-colors"
-                style={{ background: P.green, color: "#0B1224" }}
-              >
-                Learn More
-              </motion.button>
+              <Link to="/football/info">
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="mt-6 rounded-sm px-8 py-3 text-[11px] font-bold tracking-[0.25em] uppercase transition-colors"
+                  style={{ background: P.green, color: "#0B1224" }}
+                >
+                  Learn More
+                </motion.button>
+              </Link>
             </motion.div>
 
             <motion.div
@@ -278,12 +280,13 @@ function LatestNewsSection() {
                 <p className="line-clamp-2 text-[12px] leading-[1.6]" style={{ color: "#8A8E9B" }}>
                   {item.desc}
                 </p>
-                <span
-                  className="mt-1 cursor-pointer text-[11px] font-bold tracking-[0.12em] transition-colors hover:opacity-80"
+                <Link 
+                  to="/football/info"
+                  className="mt-1 block text-[11px] font-bold tracking-[0.12em] transition-colors hover:opacity-80 w-fit"
                   style={{ color: "#E5453C" }}
                 >
                   {item.link}
-                </span>
+                </Link>
               </div>
             </motion.div>
           ))}
@@ -430,10 +433,10 @@ function JoinFootballSection({ userId }: { userId?: string | null }) {
 }
 
 /* â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-export function FootballPage({ 
+export function FootballPage({
   hideLoader = false,
   userId
-}: { 
+}: {
   hideLoader?: boolean;
   userId?: string | null;
 } = {}) {

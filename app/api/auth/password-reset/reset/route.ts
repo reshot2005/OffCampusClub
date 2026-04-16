@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
       approvalStatus: user.approvalStatus as "PENDING" | "APPROVED" | "REJECTED",
       suspended: user.suspended,
       onboardingComplete: user.onboardingComplete,
+      hasPhone: !!(user.phoneNumber && user.phoneNumber.replace(/\D/g, "").length === 10),
     });
     const response = NextResponse.json({ success: true }, { status: 200 });
     response.cookies.set("occ-token", token, authCookieOptions);

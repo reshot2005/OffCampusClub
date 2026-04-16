@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminMutationPermission, requireAdminPermission } from "@/lib/admin-api-guard";
@@ -13,28 +14,43 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const resolved = searchParams.get("resolved") === "true" ? true : searchParams.get("resolved") === "false" ? false : undefined;
 
-  const [alerts, otpLast24h, otpByPurpose] = await Promise.all([
+  // Use raw queries for OTP stats to prevent "Value 'EXPORT' not found in enum" errors 
+  // when the local Prisma client is out of sync with the database schema.
+  const statsQuery = async () => {
+    try {
+      const otpLast24h: any[] = await prisma.$queryRaw`
+        SELECT COUNT(*)::int as count FROM email_otp_tokens 
+        WHERE "createdAt" >= NOW() - INTERVAL '24 hours'
+      `;
+      
+      const otpByPurpose: any[] = await prisma.$queryRaw`
+        SELECT purpose, COUNT(*)::int as count FROM email_otp_tokens 
+        WHERE "createdAt" >= NOW() - INTERVAL '7 days'
+        GROUP BY purpose
+      `;
+
+      return {
+        tokensCreatedLast24h: otpLast24h[0]?.count || 0,
+        byPurposeLast7d: otpByPurpose.map(p => ({ purpose: String(p.purpose), count: p.count }))
+      };
+    } catch (e) {
+      console.error("Security Stats Error:", e);
+      return { tokensCreatedLast24h: 0, byPurposeLast7d: [] };
+    }
+  };
+
+  const [alerts, stats] = await Promise.all([
     prisma.suspiciousAccess.findMany({
       where: resolved !== undefined ? { resolved } : {},
       orderBy: { createdAt: "desc" },
       take: 100,
     }),
-    prisma.emailOtpToken.count({
-      where: { createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
-    }),
-    prisma.emailOtpToken.groupBy({
-      by: ["purpose"],
-      _count: { _all: true },
-      where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
-    }),
+    statsQuery(),
   ]);
 
   return NextResponse.json({
     alerts: alerts.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() })),
-    otpStats: {
-      tokensCreatedLast24h: otpLast24h,
-      byPurposeLast7d: otpByPurpose.map((g) => ({ purpose: g.purpose, count: g._count._all })),
-    },
+    otpStats: stats,
   });
 }
 

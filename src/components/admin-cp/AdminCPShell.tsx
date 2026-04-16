@@ -33,6 +33,7 @@ const nav: NavItem[] = [
   { path: "/approvals", label: "Approvals", icon: CheckCircle2, badgeKey: "pending", module: "approvals" },
   { path: "/moderation", label: "Moderation", icon: Flag, module: "moderation" },
   { path: "/analytics", label: "Analytics", icon: TrendingUp, module: "analytics" },
+  { path: "/export", label: "Export", icon: Download, module: "export" },
   { path: "/activity", label: "Activity", icon: Activity, module: "audit" },
   { path: "/audit", label: "Audit Log", icon: ScrollText, module: "audit" },
   { path: "/security", label: "Security", icon: ShieldAlert, badgeKey: "alerts", module: "security" },
@@ -42,7 +43,6 @@ const nav: NavItem[] = [
   { path: "/scheduled-announcements", label: "Scheduled banners", icon: Clock, module: "announcement_schedule" },
   { path: "/compliance", label: "Compliance", icon: FileKey, module: "compliance" },
   { path: "/settings", label: "Settings", icon: Settings, module: "settings" },
-  { path: "/export", label: "Export", icon: Download, module: "export" },
 ];
 
 function toEffectiveAccess(

@@ -273,6 +273,7 @@ export async function GET(req: NextRequest) {
     approvalStatus: user.approvalStatus as "PENDING" | "APPROVED" | "REJECTED",
     suspended: user.suspended,
     onboardingComplete: user.onboardingComplete,
+    hasPhone: !!(user.phoneNumber && user.phoneNumber.replace(/\D/g, "").length === 10),
   });
 
   const mobileReturnCookie = recoveredMobileReturn;
@@ -308,7 +309,12 @@ export async function GET(req: NextRequest) {
   }
 
   const destination = postLoginDestination(
-    { role: user.role, approvalStatus: user.approvalStatus, onboardingComplete: user.onboardingComplete },
+    { 
+      role: user.role, 
+      approvalStatus: user.approvalStatus, 
+      onboardingComplete: user.onboardingComplete,
+      phoneNumber: user.phoneNumber
+    },
     redirectCookieVal,
   );
 

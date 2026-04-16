@@ -22,6 +22,7 @@ export async function POST() {
     approvalStatus: user.approvalStatus as "PENDING" | "APPROVED" | "REJECTED",
     suspended: user.suspended,
     onboardingComplete: user.onboardingComplete,
+    hasPhone: !!(user.phoneNumber && user.phoneNumber.replace(/\D/g, "").length === 10),
   });
 
   const res = NextResponse.json({

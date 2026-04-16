@@ -40,3 +40,9 @@ tmp
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Scratch & Dev Utilities
+scratch/
+tmp_*
+tests/activity-events.test.ts
+tests/manual-test.ts

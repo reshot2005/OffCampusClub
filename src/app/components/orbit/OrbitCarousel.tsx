@@ -87,11 +87,13 @@ export function OrbitCarousel() {
     const w = containerRef.current.clientWidth;
     const h = containerRef.current.clientHeight;
     const isMobile = w < 768;
+    const isTablet = w >= 768 && w < 1024;
+    
     sizeRef.current = {
-      rx: isMobile ? w * 0.42 : Math.min(w * 0.38, 480),
-      ry: isMobile ? h * 0.22 : Math.min(h * 0.32, 260),
+      rx: isMobile ? w * 0.40 : isTablet ? w * 0.35 : Math.min(w * 0.36, 460),
+      ry: isMobile ? h * 0.18 : isTablet ? h * 0.25 : Math.min(h * 0.28, 240),
       cx: w / 2,
-      cy: isMobile ? h * 0.44 : h * 0.46,
+      cy: isMobile ? h * 0.46 : isTablet ? h * 0.48 : h * 0.48,
       isMobile
     };
   }, []);
@@ -338,13 +340,13 @@ export function OrbitCarousel() {
                     exit={{ opacity: 0, scale: 0.9, y: 10 }}
                     className="flex flex-col items-center max-w-[min(92vw,52rem)]"
                   >
-                    <div className="w-[230px] sm:w-[290px] md:w-[420px] lg:w-[460px] aspect-[16/11] rounded-2xl overflow-hidden shadow-2xl mb-4 sm:mb-6 border border-black/5 bg-gray-50">
+                    <div className="w-[180px] sm:w-[260px] md:w-[380px] lg:w-[440px] aspect-[16/11] rounded-2xl overflow-hidden shadow-xl mb-4 sm:mb-5 border border-black/5 bg-gray-50">
                       <img src={selectedProject.image} alt={selectedProject.title} className="w-full h-full object-cover" />
                     </div>
-                    <h2 className="text-xl sm:text-3xl md:text-5xl font-black tracking-tight text-center leading-[1.1] text-slate-900 px-4">
+                    <h2 className="text-lg sm:text-2xl md:text-4xl font-black tracking-tight text-center leading-[1.1] text-slate-900 px-4">
                       {selectedProject.title}
                     </h2>
-                    <span className="mt-3 text-[9px] font-black uppercase tracking-[0.3em] text-indigo-500">
+                    <span className="mt-2 text-[8px] font-black uppercase tracking-[0.3em] text-indigo-500">
                       {selectedProject.category}
                     </span>
                   </motion.div>

@@ -105,6 +105,7 @@ export async function POST(req: NextRequest) {
       approvalStatus: refreshed.approvalStatus as "PENDING" | "APPROVED" | "REJECTED",
       suspended: refreshed.suspended,
       onboardingComplete: refreshed.onboardingComplete,
+      hasPhone: !!(cleanPhone && cleanPhone.length === 10),
     });
 
     const res = NextResponse.json({ success: true });

@@ -11,6 +11,8 @@ type User = {
   id: string; fullName: string; email: string; phoneNumber: string | null; collegeName: string;
   role: string; approvalStatus: string; suspended: boolean;
   createdAt: string; updatedAt: string; referralCode: string | null; clubs: string[];
+  referredByInfo?: { name: string; code: string | null } | null;
+  isPhoneLegit?: boolean;
 };
 
 export function UsersCRUD({ users: initial }: { users: User[] }) {
@@ -19,6 +21,7 @@ export function UsersCRUD({ users: initial }: { users: User[] }) {
   const [q, setQ] = useState("");
   const [roleF, setRoleF] = useState("");
   const [statusF, setStatusF] = useState("");
+  const [phoneF, setPhoneF] = useState("");
 
   useEffect(() => {
     setUsers(initial);
@@ -36,10 +39,18 @@ export function UsersCRUD({ users: initial }: { users: User[] }) {
 
   const filtered = useMemo(() => {
     return users.filter((u) => {
-      if (q && !`${u.fullName} ${u.email} ${u.collegeName}`.toLowerCase().includes(q.toLowerCase())) return false;
+      if (q) {
+        const searchStr = `${u.fullName} ${u.email} ${u.collegeName} ${u.referredByInfo?.name || ""} ${u.referredByInfo?.code || ""}`.toLowerCase();
+        if (!searchStr.includes(q.toLowerCase())) return false;
+      }
       if (roleF && u.role !== roleF) return false;
       if (statusF === "SUSPENDED" && !u.suspended) return false;
       if (statusF && statusF !== "SUSPENDED" && u.approvalStatus !== statusF) return false;
+      
+      if (phoneF === "LEGIT" && !u.isPhoneLegit) return false;
+      if (phoneF === "SUSPECT" && (u.isPhoneLegit || !u.phoneNumber)) return false;
+      if (phoneF === "MISSING" && u.phoneNumber) return false;
+      
       return true;
     });
   }, [users, q, roleF, statusF]);
@@ -199,6 +210,12 @@ export function UsersCRUD({ users: initial }: { users: User[] }) {
           <option value="REJECTED">Rejected</option>
           <option value="SUSPENDED">Suspended</option>
         </select>
+        <select value={phoneF} onChange={(e) => setPhoneF(e.target.value)} className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white outline-none">
+          <option value="">All Phones</option>
+          <option value="LEGIT">Legit Only</option>
+          <option value="SUSPECT">Suspicious Only</option>
+          <option value="MISSING">Missing Only</option>
+        </select>
       </div>
 
       {/* Table */}
@@ -208,59 +225,95 @@ export function UsersCRUD({ users: initial }: { users: User[] }) {
             <tr className="text-[10px] uppercase tracking-widest text-white/30">
               <th className="px-4 py-3">User</th>
               <th className="px-4 py-3">Role</th>
-              <th className="px-4 py-3">Clubs</th>
+              <th className="px-4 py-3">Clubs joined</th>
+              <th className="px-4 py-3">Referred By</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((u, i) => (
-              <motion.tr key={u.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
-                className="border-b border-white/[0.04] hover:bg-white/[0.02]"
-              >
-                <td className="px-4 py-3">
-                  <p className="font-semibold text-white text-[13px]">{u.fullName}</p>
-                  <p className="text-[11px] text-white/40 font-mono">{u.email}</p>
-                  {u.phoneNumber && (
-                    <p className="text-[10px] text-white/30 font-mono italic">{u.phoneNumber}</p>
-                  )}
-                  <p className="text-[10px] text-white/25 mt-0.5">{u.collegeName}</p>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="inline-block rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-xs text-white">
-                    {u.role}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-xs text-white/40">{u.clubs.join(", ") || "—"}</td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-col gap-1">
-                    <span className={`inline-block w-fit rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${
-                      u.approvalStatus === "APPROVED" ? "bg-[#00E87A]/15 text-[#00E87A]"
-                      : u.approvalStatus === "PENDING" ? "bg-amber-500/15 text-amber-300"
-                      : "bg-red-500/15 text-red-300"
-                    }`}>{u.approvalStatus}</span>
-                    {u.suspended && <span className="inline-block w-fit rounded-full px-2 py-0.5 text-[9px] font-bold uppercase bg-red-500/15 text-red-400">Suspended</span>}
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1.5">
-                    <button onClick={() => suspend(u)} title={u.suspended ? "Unsuspend" : "Suspend"}
-                      className={`p-1.5 rounded-lg ${u.suspended ? "bg-[#00E87A]/10 text-[#00E87A]" : "bg-white/5 text-white/40 hover:text-amber-400"} transition-all`}
-                    >
-                      {u.suspended ? <UserCheck className="h-3.5 w-3.5" /> : <Ban className="h-3.5 w-3.5" />}
-                    </button>
-                    <button onClick={() => resetPw(u)} title="Reset password" className="p-1.5 rounded-lg bg-white/5 text-white/40 hover:text-white transition-all">
-                      <Key className="h-3.5 w-3.5" />
-                    </button>
-                    {u.role !== "ADMIN" && (
-                      <button onClick={() => deleteUser(u)} title="Delete" className="p-1.5 rounded-lg bg-white/5 text-white/40 hover:text-red-400 transition-all">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+            {filtered.map((u, i) => {
+              const isNewUser = new Date(u.createdAt).getTime() > new Date("2026-04-16T19:30:00Z").getTime();
+              return (
+                <motion.tr key={u.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
+                  className="border-b border-white/[0.04] hover:bg-white/[0.02]"
+                >
+                  <td className="px-4 py-3">
+                    <p className="font-semibold text-white text-[13px]">{u.fullName}</p>
+                    <p className="text-[11px] text-white/40 font-mono">{u.email}</p>
+                    {u.phoneNumber && (
+                      <div className="flex flex-col gap-1 mt-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <p className={`text-[10px] font-mono italic ${isNewUser && u.isPhoneLegit ? "text-[#00E87A]" : !u.isPhoneLegit ? "text-red-400/80" : "text-white/40"}`}>
+                            {u.phoneNumber}
+                          </p>
+                          {u.isPhoneLegit ? (
+                            isNewUser ? (
+                              <div className="flex h-3 w-3 items-center justify-center rounded-full bg-[#00E87A]/20" title="Verified New User">
+                                <div className="h-1.5 w-1.5 rounded-full bg-[#00E87A]" />
+                              </div>
+                            ) : null
+                          ) : (
+                            <div className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500/20" title="Suspicious / Dummy Pattern">
+                              <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                            </div>
+                          )}
+                        </div>
+                        {(!u.isPhoneLegit || (isNewUser && u.isPhoneLegit)) && (
+                          <span className={`text-[8px] font-black tracking-widest uppercase w-fit px-1 rounded ${u.isPhoneLegit ? "bg-[#00E87A]/10 text-[#00E87A]/70" : "bg-red-500/10 text-red-500/60"}`}>
+                            {u.isPhoneLegit ? "Verified" : "Suspect"}
+                          </span>
+                        )}
+                      </div>
                     )}
-                  </div>
-                </td>
-              </motion.tr>
-            ))}
+                    <p className="text-[10px] text-white/25 mt-0.5">{u.collegeName}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="inline-block rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-xs text-white">
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-white/40">{u.clubs.join(", ") || "—"}</td>
+                  <td className="px-4 py-3">
+                    {u.referredByInfo ? (
+                      <div>
+                        <p className="text-[11px] font-semibold text-white/70">{u.referredByInfo.name}</p>
+                        <p className="text-[9px] font-mono text-indigo-400 capitalize">{u.referredByInfo.code || "No Code"}</p>
+                      </div>
+                    ) : (
+                      <span className="text-white/20">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col gap-1">
+                      <span className={`inline-block w-fit rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${
+                        u.approvalStatus === "APPROVED" ? "bg-[#00E87A]/15 text-[#00E87A]"
+                        : u.approvalStatus === "PENDING" ? "bg-amber-500/15 text-amber-300"
+                        : "bg-red-500/15 text-red-300"
+                      }`}>{u.approvalStatus}</span>
+                      {u.suspended && <span className="inline-block w-fit rounded-full px-2 py-0.5 text-[9px] font-bold uppercase bg-red-500/15 text-red-400">Suspended</span>}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button onClick={() => suspend(u)} title={u.suspended ? "Unsuspend" : "Suspend"}
+                        className={`p-1.5 rounded-lg ${u.suspended ? "bg-[#00E87A]/10 text-[#00E87A]" : "bg-white/5 text-white/40 hover:text-amber-400"} transition-all`}
+                      >
+                        {u.suspended ? <UserCheck className="h-3.5 w-3.5" /> : <Ban className="h-3.5 w-3.5" />}
+                      </button>
+                      <button onClick={() => resetPw(u)} title="Reset password" className="p-1.5 rounded-lg bg-white/5 text-white/40 hover:text-white transition-all">
+                        <Key className="h-3.5 w-3.5" />
+                      </button>
+                      {u.role !== "ADMIN" && (
+                        <button onClick={() => deleteUser(u)} title="Delete" className="p-1.5 rounded-lg bg-white/5 text-white/40 hover:text-red-400 transition-all">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </motion.tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

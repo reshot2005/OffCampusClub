@@ -116,3 +116,42 @@ export async function sendSecurityAlert(params: {
   await sendEmailInternal({ to, subject, text, html });
 }
 
+export async function sendExportNotification(params: {
+  adminEmail: string;
+  adminName: string;
+  targetEmail: string;
+  type: string;
+  ip: string;
+}) {
+  const subject = `📥 EXPORT LOG: ${params.type} data downloaded`;
+  // The "SMTP owner" is the SMTP_USER/From email typically
+  const to = process.env.SMTP_USER || "aksharaenterprisesintern@gmail.com";
+
+  const text =
+    `DATA EXPORT LOG\n\n` +
+    `An admin has downloaded platform data.\n\n` +
+    `Admin: ${params.adminName} (${params.adminEmail})\n` +
+    `Verified via personal email: ${params.targetEmail}\n` +
+    `Data Category: ${params.type}\n` +
+    `IP Address: ${params.ip}\n` +
+    `Time: ${new Date().toLocaleString()}\n`;
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111;border:2px solid #5227FF;padding:24px;border-radius:16px;max-width:500px">
+      <h2 style="margin:0 0 12px;color:#5227FF">📥 Data Export Notification</h2>
+      <p style="margin:0 0 16px">An administrator has just exported platform data.</p>
+      <div style="background:#f9f9f9;padding:16px;border-radius:12px;margin-bottom:16px">
+        <p style="margin:0"><b>Admin:</b> ${params.adminName} (${params.adminEmail})</p>
+        <p style="margin:8px 0 0"><b>Personal Verification Email:</b> ${params.targetEmail}</p>
+        <p style="margin:8px 0 0"><b>Data Category:</b> <span style="text-transform:uppercase">${params.type}</span></p>
+        <p style="margin:8px 0 0"><b>IP Address:</b> ${params.ip}</p>
+        <p style="margin:8px 0 0"><b>Time:</b> ${new Date().toLocaleString()}</p>
+      </div>
+      <p style="margin:0;font-size:13px;color:#666">This log was automatically generated for audit purposes.</p>
+    </div>
+  `;
+
+  await sendEmailInternal({ to, subject, text, html });
+}
+
+
