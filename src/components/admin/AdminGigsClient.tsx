@@ -29,7 +29,7 @@ export type AdminGigRow = {
     status: string;
     message: string | null;
     createdAt: string;
-    user: { id: string; fullName: string; email: string; phoneNumber: string };
+    user: { id: string; fullName: string; email: string; phoneNumber: string | null };
   }[];
 };
 
@@ -433,7 +433,7 @@ export function AdminGigsClient({ gigs: initial }: { gigs: AdminGigRow[] }) {
                                   </span>
                                 </div>
                                 <p className="mt-1 text-[11px] text-white/35">{a.user.email}</p>
-                                <p className="text-[11px] text-white/35">{a.user.phoneNumber}</p>
+                                <p className="text-[11px] text-white/35">{a.user.phoneNumber || "No phone"}</p>
                                 {a.message ? (
                                   <p className="mt-2 border-t border-white/[0.06] pt-2 text-white/50">
                                     {a.message}

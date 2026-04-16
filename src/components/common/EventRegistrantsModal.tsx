@@ -12,7 +12,7 @@ type Registrant = {
   user: {
     fullName: string;
     email: string;
-    phoneNumber: string;
+    phoneNumber: string | null;
     collegeName: string;
     graduationYear: number | null;
     avatar: string | null;
@@ -98,7 +98,7 @@ export function EventRegistrantsModal({
                           <Mail className="h-3 w-3 text-[#5227FF]" /> {reg.user.email}
                         </p>
                         <p className="flex items-center gap-2 text-xs text-white/60 font-medium border-t border-white/[0.05] pt-1 mt-1">
-                          <Phone className="h-3 w-3 text-[#5227FF]" /> {reg.user.phoneNumber}
+                          <Phone className="h-3 w-3 text-[#5227FF]" /> {reg.user.phoneNumber || "No phone"}
                         </p>
                       </div>
                       <div className="flex flex-col items-end justify-center">

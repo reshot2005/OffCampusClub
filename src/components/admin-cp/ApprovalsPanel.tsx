@@ -8,7 +8,7 @@ import { CheckCircle2, XCircle, UserCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 type Approval = {
-  id: string; fullName: string; email: string; phoneNumber: string; collegeName: string;
+  id: string; fullName: string; email: string; phoneNumber: string | null; collegeName: string;
   bio: string | null; city: string | null; createdAt: string;
   club: { name: string; slug: string } | null;
 };
@@ -61,7 +61,7 @@ export function ApprovalsPanel({ approvals: initial }: { approvals: Approval[] }
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-[11px] text-white/35 mt-2">
-                  <span>📞 {a.phoneNumber}</span>
+                  <span>📞 {a.phoneNumber || "No phone"}</span>
                   <span>🏫 {a.collegeName}</span>
                   {a.city && <span>📍 {a.city}</span>}
                   {a.club && <span className="text-[#5227FF]">🎯 {a.club.name}</span>}

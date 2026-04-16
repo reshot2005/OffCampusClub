@@ -27,7 +27,7 @@ type AppRow = {
     id: string;
     fullName: string;
     email: string;
-    phoneNumber: string;
+    phoneNumber: string | null;
     collegeName: string;
     avatar: string | null;
   };
@@ -492,7 +492,7 @@ export function ClubHeaderGigsClient({ initialGigs }: { initialGigs: HeaderGigRo
                         gig.applications.map((a) => {
                           const name = a.applicantName || a.user.fullName;
                           const email = a.applicantEmail || a.user.email;
-                          const phone = a.applicantPhone || a.user.phoneNumber;
+                          const phone = a.applicantPhone || a.user.phoneNumber || "No phone";
                           return (
                             <div key={a.id} className="rounded-xl border border-white/[0.06] bg-black/20 px-4 py-3">
                               <div className="flex flex-wrap items-start justify-between gap-3">

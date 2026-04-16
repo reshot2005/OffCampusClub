@@ -9,7 +9,7 @@ export type AdminUserRow = {
   id: string;
   fullName: string;
   email: string;
-  phoneNumber: string;
+  phoneNumber: string | null;
   role: string;
   approvalStatus: string;
   collegeName: string;

@@ -12,7 +12,7 @@ import { profileUpdateSchema, type ProfileUpdateInput } from "@/lib/validations"
 
 export type ProfileFormInitialValues = ProfileUpdateInput & {
   email: string;
-  phoneNumber: string;
+  phoneNumber: string | null;
 };
 
 export function ProfileForm({ initialValues }: { initialValues: ProfileFormInitialValues }) {

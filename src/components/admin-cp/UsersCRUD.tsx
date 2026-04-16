@@ -8,7 +8,7 @@ import { Search, Ban, Key, Trash2, UserCheck } from "lucide-react";
 import { pusherClient } from "@/lib/pusher";
 
 type User = {
-  id: string; fullName: string; email: string; phoneNumber: string; collegeName: string;
+  id: string; fullName: string; email: string; phoneNumber: string | null; collegeName: string;
   role: string; approvalStatus: string; suspended: boolean;
   createdAt: string; updatedAt: string; referralCode: string | null; clubs: string[];
 };

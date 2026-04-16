@@ -8,7 +8,7 @@ type Member = {
   student: {
     fullName: string;
     email: string;
-    phoneNumber: string;
+    phoneNumber: string | null;
     collegeName: string;
     bio: string | null;
     city: string | null;

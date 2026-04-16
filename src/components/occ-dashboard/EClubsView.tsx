@@ -67,7 +67,7 @@ export function EClubsView({
   gigs: GigRow[];
   canPost: boolean;
   userId: string;
-  applicantProfile: { fullName: string; email: string; phoneNumber: string };
+  applicantProfile: { fullName: string; email: string; phoneNumber: string | null };
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -82,7 +82,7 @@ export function EClubsView({
   const [applyModalTitle, setApplyModalTitle] = useState("");
   const [fName, setFName] = useState(applicantProfile.fullName);
   const [fEmail, setFEmail] = useState(applicantProfile.email);
-  const [fPhone, setFPhone] = useState(applicantProfile.phoneNumber);
+  const [fPhone, setFPhone] = useState(applicantProfile.phoneNumber || "");
   const [fPitch, setFPitch] = useState("");
   const [applyLoading, setApplyLoading] = useState(false);
   const [justSubmitted, setJustSubmitted] = useState<string | null>(null);
@@ -113,7 +113,7 @@ export function EClubsView({
     setApplyModalTitle(gigTitle);
     setFName(applicantProfile.fullName);
     setFEmail(applicantProfile.email);
-    setFPhone(applicantProfile.phoneNumber);
+    setFPhone(applicantProfile.phoneNumber || "");
     setFPitch("");
   };
 

@@ -9,7 +9,7 @@ export type ApprovalRow = {
   id: string;
   fullName: string;
   email: string;
-  phoneNumber: string;
+  phoneNumber: string | null;
   collegeName: string;
   bio: string | null;
   city: string | null;
@@ -81,7 +81,7 @@ export function ApprovalCard({
           <div className="min-w-0 space-y-1">
             <p className="font-serif text-xl italic text-[#F5F1EB] md:text-2xl">{approval.fullName}</p>
             <p className="font-mono text-xs text-white/50">
-              {approval.email} · {approval.phoneNumber}
+              {approval.email} · {approval.phoneNumber || "No phone"}
             </p>
             <p className="text-sm text-[#C9A96E]">{approval.collegeName}</p>
             {approval.clubManaged ? (

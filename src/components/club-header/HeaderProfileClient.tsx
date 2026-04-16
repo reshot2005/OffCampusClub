@@ -22,7 +22,7 @@ import { avatarSrc } from "@/lib/avatar";
 interface Props {
   initialValues: ProfileUpdateInput & {
     email: string;
-    phoneNumber: string;
+    phoneNumber: string | null;
     clubName: string;
   };
 }
@@ -216,7 +216,7 @@ export function HeaderProfileClient({ initialValues }: Props) {
                   <Phone className="h-3 w-3" /> Phone (Read-only)
                 </label>
                 <div className="w-full h-12 bg-white/5 border border-white/[0.05] rounded-xl px-4 flex items-center text-sm text-white/30 cursor-not-allowed">
-                  {phoneNumber}
+                  {phoneNumber || "No phone"}
                 </div>
               </div>
             </div>
