@@ -63,7 +63,8 @@ export const profileUpdateSchema = z.object({
       const digits = value.replace(/\D/g, "");
       return digits.length > 10 ? digits.slice(-10) : digits;
     })
-    .optional(),
+    .optional()
+    .nullable(),
   collegeName: z.string().min(2, "College name is required"),
   bio: z.string().max(280, "Bio must be 280 characters or less").optional().or(z.literal("")),
   city: z.string().max(80, "City is too long").optional().or(z.literal("")),

@@ -9,7 +9,7 @@ export default async function HeaderProfilePage() {
       initialValues={{
         fullName: user.fullName,
         email: user.email,
-        phoneNumber: user.phoneNumber,
+        phoneNumber: user.phoneNumber as string | null,
         collegeName: user.collegeName,
         city: user.city ?? "",
         bio: user.bio ?? "",
