@@ -45,7 +45,7 @@ export async function GET() {
   ]);
 
   return NextResponse.json({
-    commentReports: reports.map((r) => ({
+    commentReports: reports.map((r: any) => ({
       id: r.id,
       reason: r.reason,
       createdAt: r.createdAt.toISOString(),
@@ -59,7 +59,7 @@ export async function GET() {
           }
         : null,
     })),
-    gigApplications: applications.map((a) => ({
+    gigApplications: applications.map((a: any) => ({
       id: a.id,
       message: a.message,
       applicantName: a.applicantName,
@@ -67,7 +67,7 @@ export async function GET() {
       gig: a.gig,
       user: a.user,
     })),
-    tickets: tickets.map((t) => ({
+    tickets: tickets.map((t: any) => ({
       id: t.id,
       resourceType: t.resourceType,
       resourceId: t.resourceId,
