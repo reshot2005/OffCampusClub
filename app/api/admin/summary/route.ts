@@ -28,6 +28,6 @@ export async function GET() {
     totalPosts,
     totalReferrals,
     eventRegs,
-    usersByRole: usersByRole.map((r) => ({ role: r.role, count: r._count.id })),
+    usersByRole: usersByRole.map((r: any) => ({ role: r.role, count: r._count.id })),
   });
 }

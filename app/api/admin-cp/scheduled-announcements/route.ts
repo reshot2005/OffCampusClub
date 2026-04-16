@@ -14,7 +14,7 @@ export async function GET() {
   });
 
   return NextResponse.json({
-    items: rows.map((r) => ({
+    items: rows.map((r: any) => ({
       ...r,
       startsAt: r.startsAt.toISOString(),
       endsAt: r.endsAt.toISOString(),
