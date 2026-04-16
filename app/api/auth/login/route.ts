@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
         sendSecurityAlert({
           userEmail: user.email,
           userName: user.fullName,
-          ip: ipAddress,
+          ip: ipAddress || "unknown",
           userAgent: userAgent,
         }).catch((err) => console.error("[auth/login] Admin alert failed:", err));
       } catch (err) {
